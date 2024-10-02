@@ -1,5 +1,8 @@
 package com.dzone.tnas.introspectorfilter;
 
+import com.dzone.tnas.introspectorfilter.annotation.Filterable;
+import com.dzone.tnas.introspectorfilter.exception.IntrospectionRuntimeException;
+
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -7,35 +10,45 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Stream;
 
-import com.dzone.tnas.introspectorfilter.annotation.Filterable;
-import com.dzone.tnas.introspectorfilter.exception.IntrospectionRuntimeException;
+public class IntrospectorFilter<T> implements InMemoryFilter {
 
-public class InspectorFilter<T, P extends Annotation, Q extends Annotation> implements InMemoryFilter {
+	private final Set<Class<? extends Annotation>> hierarchicalAnnotations;
+
+	@SafeVarargs
+    public IntrospectorFilter(Class<? extends Annotation> ... annotations) {
+		this.hierarchicalAnnotations = Set.of(annotations);
+	}
 
 	@Override
 	public Boolean filter(Object value, Object filter, Locale locale) {
-		return null;
+		return true;
 	}
 
-	private List<String> findStringsToFilter(T value) {
-		
-		var superclass = value.getClass().getSuperclass();
-		Class<P> firstAnnotationLevel = null;
-		Class<Q> secondAnnotationLevel = null;
-		
+	private boolean isValidParentClass(Class<?> parentClass) {
+		return Objects.nonNull(parentClass) &&
+				(this.hierarchicalAnnotations.isEmpty()
+						|| Stream.of(parentClass.getAnnotations())
+							.map(Annotation::annotationType)
+							.anyMatch(this.hierarchicalAnnotations::contains));
+	}
+
+	public List<String> findStringsToFilter(T value) {
+
 		var stringsToFilter = new ArrayList<String>();
+		var propertyValueList = new ArrayList<>();
+		Class<?> currentClass;
 
-		var propertyValueList = findPropertyValueList(value.getClass(), value);
-		while (Objects.nonNull(superclass) 
-				&& (Objects.nonNull(superclass.getAnnotation(firstAnnotationLevel)) 
-						|| Objects.nonNull(superclass.getAnnotation(secondAnnotationLevel)))) {
-			propertyValueList.addAll(findPropertyValueList(superclass, value));
-			superclass = superclass.getSuperclass();
-		}
+		do {
+			currentClass = value.getClass();
+			propertyValueList.addAll(this.findPropertyValueList(currentClass, value));
+			currentClass = currentClass.getSuperclass();
+		} while (isValidParentClass(currentClass));
 
-		propertyValueList.stream().filter(Objects::nonNull)
+		propertyValueList.stream()
+				.filter(Objects::nonNull)
 				.forEach(propVal -> {
 				
 					var innerFields = propVal.getClass().getDeclaredFields();
@@ -56,13 +69,13 @@ public class InspectorFilter<T, P extends Annotation, Q extends Annotation> impl
 								.getClass().getDeclaredFields()).toList();
 
 						var superclassCollection = value.getClass().getSuperclass();
-						while (Objects.nonNull(superclassCollection)
-								&& (Objects.nonNull(superclassCollection.getAnnotation(firstAnnotationLevel))
-										|| Objects.nonNull(superclassCollection.getAnnotation(secondAnnotationLevel)))) {
-							fieldsCollectionElement.addAll(Stream.of(superclassCollection.getDeclaredFields())
-									.toList());
-							superclassCollection = superclassCollection.getSuperclass();
-						}
+//						while (Objects.nonNull(superclassCollection)
+//								&& (Objects.nonNull(superclassCollection.getAnnotation(firstAnnotationLevel))
+//										|| Objects.nonNull(superclassCollection.getAnnotation(secondAnnotationLevel)))) {
+//							fieldsCollectionElement.addAll(Stream.of(superclassCollection.getDeclaredFields())
+//									.toList());
+//							superclassCollection = superclassCollection.getSuperclass();
+//						}
 
 						var filterableProps = fieldsCollectionElement.stream()
 								.filter(fce -> Stream.of(fce.getAnnotations()).anyMatch(a -> a.annotationType() == Filterable.class))
@@ -94,7 +107,7 @@ public class InspectorFilter<T, P extends Annotation, Q extends Annotation> impl
 	}
 	
 	
-	private List<Object> findPropertyValueList(Class<? extends Object> targetClass, T value) {
+	private List<Object> findPropertyValueList(Class<?> targetClass, T value) {
 		return Stream.of(targetClass.getDeclaredFields())
 				.filter(f -> Stream.of(f.getAnnotations()).anyMatch(a -> a.annotationType() == Filterable.class))
 				.map(f -> AccessHelper.findPropertyValue(f, value)).toList();
