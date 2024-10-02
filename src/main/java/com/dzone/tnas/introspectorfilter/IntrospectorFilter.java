@@ -1,19 +1,23 @@
 package com.dzone.tnas.introspectorfilter;
 
 import com.dzone.tnas.introspectorfilter.annotation.Filterable;
-import com.dzone.tnas.introspectorfilter.exception.IntrospectionRuntimeException;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 public class IntrospectorFilter<T> implements InMemoryFilter {
+
+	private final Predicate<Field> isFilterableField = f ->
+			Stream.of(f.getAnnotations()).anyMatch(a -> a.annotationType() == Filterable.class);
 
 	private final Set<Class<? extends Annotation>> hierarchicalAnnotations;
 
@@ -56,30 +60,25 @@ public class IntrospectorFilter<T> implements InMemoryFilter {
 					if (propVal instanceof String strPropVal) {
 						stringsToFilter.add(strPropVal);
 					}
-					else if (propVal instanceof Collection) {
+					else if (propVal instanceof Collection<?> innerCollection) {
 						
-						var innerCollection = (Collection<?>) propVal;
-						
-						if (Objects.isNull(innerCollection) || innerCollection.isEmpty()) {
+						if (innerCollection.isEmpty()) {
 							return;
 						}
-						
-						List<Field> fieldsCollectionElement = Stream.of(innerCollection.stream().findFirst()
-								.orElseThrow(() -> new IntrospectionRuntimeException("DSNLVL_VIEW_047"))
-								.getClass().getDeclaredFields()).toList();
 
-						var superclassCollection = value.getClass().getSuperclass();
-//						while (Objects.nonNull(superclassCollection)
-//								&& (Objects.nonNull(superclassCollection.getAnnotation(firstAnnotationLevel))
-//										|| Objects.nonNull(superclassCollection.getAnnotation(secondAnnotationLevel)))) {
-//							fieldsCollectionElement.addAll(Stream.of(superclassCollection.getDeclaredFields())
-//									.toList());
-//							superclassCollection = superclassCollection.getSuperclass();
-//						}
+						var firstCollectionElement = innerCollection.iterator().next();
 
-						var filterableProps = fieldsCollectionElement.stream()
-								.filter(fce -> Stream.of(fce.getAnnotations()).anyMatch(a -> a.annotationType() == Filterable.class))
-								.toList();
+						var fieldsCollectionElement = Arrays.asList(firstCollectionElement.getClass().getDeclaredFields());
+
+						Class<?> elementClass;
+
+						do {
+							elementClass = firstCollectionElement.getClass();
+//							fieldsCollectionElement.addAll((Collection<Field>) this.findPropertyValueList(elementClass, value));
+							elementClass = elementClass.getSuperclass();
+						} while (isValidParentClass(elementClass));
+
+						var filterableProps = fieldsCollectionElement.stream().filter(isFilterableField).toList();
 
 						stringsToFilter.addAll(innerCollection.stream()
 								.map(e -> filterableProps.stream()
@@ -94,7 +93,7 @@ public class IntrospectorFilter<T> implements InMemoryFilter {
 					else { // Single Custom Class
 						stringsToFilter.addAll(
 								Stream.of(innerFields)
-									.filter(nf -> Stream.of(nf.getAnnotations()).anyMatch(a -> a.annotationType() == Filterable.class))
+									.filter(isFilterableField)
 										.map(nf -> AccessHelper.findPropertyValue(nf, propVal))
 									.filter(Objects::nonNull)
 									.filter(String.class::isInstance)
@@ -109,7 +108,7 @@ public class IntrospectorFilter<T> implements InMemoryFilter {
 	
 	private List<Object> findPropertyValueList(Class<?> targetClass, T value) {
 		return Stream.of(targetClass.getDeclaredFields())
-				.filter(f -> Stream.of(f.getAnnotations()).anyMatch(a -> a.annotationType() == Filterable.class))
+				.filter(isFilterableField)
 				.map(f -> AccessHelper.findPropertyValue(f, value)).toList();
 	}
 }
