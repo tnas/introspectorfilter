@@ -9,7 +9,12 @@ public class Comment {
     @Filterable
     private String review;
 
-    public long getId() {
+    public Comment(long id, String review) {
+		this.id = id;
+		this.review = review;
+	}
+
+	public long getId() {
         return id;
     }
 
@@ -24,4 +29,10 @@ public class Comment {
     public void setReview(String review) {
         this.review = review;
     }
+
+	@Override
+	public String toString() {
+		return "Comment [id=" + id + ", review=" + review + "]";
+	}
+    
 }

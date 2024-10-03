@@ -14,7 +14,14 @@ public class Post extends Publication {
     @Filterable
     private List<Comment> comments;
 
-    public long getId() {
+    public Post(long id, List<String> hashtags, List<Comment> comments, String text) {
+		this.id = id;
+		this.hashtags = hashtags;
+		this.comments = comments;
+		this.setText(text);
+	}
+
+	public long getId() {
         return id;
     }
 
@@ -37,4 +44,11 @@ public class Post extends Publication {
     public void setComments(List<Comment> comments) {
         this.comments = comments;
     }
+
+	@Override
+	public String toString() {
+		return "Post [id=" + id + ", hashtags=" + hashtags + ", comments=" + comments + ", text = " + getText() + "]";
+	}
+    
+    
 }

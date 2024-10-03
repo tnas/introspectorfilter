@@ -1,7 +1,6 @@
 package com.dzone.tnas.introspectorfilter;
 
-import com.dzone.tnas.introspectorfilter.annotation.Filterable;
-
+import java.beans.PropertyDescriptor;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -11,13 +10,27 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.BiFunction;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
+
+import org.apache.commons.lang3.StringUtils;
+
+import com.dzone.tnas.introspectorfilter.annotation.Filterable;
+import com.dzone.tnas.introspectorfilter.exception.IntrospectionRuntimeException;
 
 public class IntrospectorFilter<T> implements InMemoryFilter {
 
 	private final Predicate<Field> isFilterableField = f ->
 			Stream.of(f.getAnnotations()).anyMatch(a -> a.annotationType() == Filterable.class);
+			
+	private BiFunction<Field, Object, Object> readFieldValue = (field, instance) -> {
+		try {
+			return new PropertyDescriptor(field.getName(), instance.getClass()).getReadMethod().invoke(instance);
+		} catch (Exception e) {
+			throw new IntrospectionRuntimeException(e);
+		}
+	};
 
 	private final Set<Class<? extends Annotation>> hierarchicalAnnotations;
 
@@ -26,9 +39,20 @@ public class IntrospectorFilter<T> implements InMemoryFilter {
 		this.hierarchicalAnnotations = Set.of(annotations);
 	}
 
+	public Boolean filter(Object value, Object filter) {
+		return this.filter(value, filter, Locale.getDefault());
+	}
+	
+	@SuppressWarnings("unchecked")
 	@Override
 	public Boolean filter(Object value, Object filter, Locale locale) {
-		return true;
+		
+		String textFilter = Objects.isNull(filter) ? null : StringUtils.stripAccents(filter.toString().trim().toLowerCase());
+
+		final Predicate<String> containsTextFilter = s -> 
+			Objects.nonNull(s) && StringUtils.stripAccents(s.toLowerCase()).contains(textFilter);
+		
+		return StringUtils.isBlank(textFilter) || this.findStringsToFilter((T) value).stream().anyMatch(containsTextFilter);
 	}
 
 	private boolean isValidParentClass(Class<?> parentClass) {
@@ -39,76 +63,66 @@ public class IntrospectorFilter<T> implements InMemoryFilter {
 							.anyMatch(this.hierarchicalAnnotations::contains));
 	}
 
-	public List<String> findStringsToFilter(T value) {
+	private List<String> findStringsToFilter(T value) {
 
 		var stringsToFilter = new ArrayList<String>();
-		var propertyValueList = new ArrayList<>();
-		Class<?> currentClass;
+		var fieldsValueList = new ArrayList<>();
+		Class<?> currentClass = value.getClass();
 
 		do {
-			currentClass = value.getClass();
-			propertyValueList.addAll(this.findPropertyValueList(currentClass, value));
+			fieldsValueList.addAll(this.getFilterableFieldValues(currentClass, value));
 			currentClass = currentClass.getSuperclass();
 		} while (isValidParentClass(currentClass));
 
-		propertyValueList.stream()
+		fieldsValueList.stream()
 				.filter(Objects::nonNull)
-				.forEach(propVal -> {
+				.forEach(fieldValue -> {
 				
-					var innerFields = propVal.getClass().getDeclaredFields();
-					
-					if (propVal instanceof String strPropVal) {
-						stringsToFilter.add(strPropVal);
-					}
-					else if (propVal instanceof Collection<?> innerCollection) {
+					switch (fieldValue) {
+						case String strPropVal -> stringsToFilter.add(strPropVal);
 						
-						if (innerCollection.isEmpty()) {
-							return;
+						case Collection<?> innerCollection -> {
+	
+							if (innerCollection.isEmpty()) {
+								return;
+							}
+	
+							var firstCollectionElement = innerCollection.iterator().next();
+							var fieldsCollectionElement = new ArrayList<Field>();
+							Class<?> elementClass = firstCollectionElement.getClass();
+	
+							do {
+								fieldsCollectionElement.addAll(Arrays.asList(elementClass.getDeclaredFields()));
+								elementClass = elementClass.getSuperclass();
+							} while (isValidParentClass(elementClass));
+	
+							var filterableFields = fieldsCollectionElement.stream().filter(isFilterableField).toList();
+	
+							stringsToFilter.addAll(innerCollection.stream()
+									.map(e -> filterableFields.stream().map(f -> readFieldValue.apply(f, e))
+											.filter(Objects::nonNull).filter(String.class::isInstance)
+											.map(String.class::cast).toList())
+									.flatMap(Collection::stream).toList());
 						}
-
-						var firstCollectionElement = innerCollection.iterator().next();
-
-						var fieldsCollectionElement = Arrays.asList(firstCollectionElement.getClass().getDeclaredFields());
-
-						Class<?> elementClass;
-
-						do {
-							elementClass = firstCollectionElement.getClass();
-//							fieldsCollectionElement.addAll((Collection<Field>) this.findPropertyValueList(elementClass, value));
-							elementClass = elementClass.getSuperclass();
-						} while (isValidParentClass(elementClass));
-
-						var filterableProps = fieldsCollectionElement.stream().filter(isFilterableField).toList();
-
-						stringsToFilter.addAll(innerCollection.stream()
-								.map(e -> filterableProps.stream()
-										.map(fp -> AccessHelper.findPropertyValue(fp, e))
+						default -> // Single Custom Class
+							stringsToFilter.addAll(
+									Stream.of(fieldValue.getClass().getDeclaredFields())
+										.filter(isFilterableField)
+										.map(f -> readFieldValue.apply(f, fieldValue))
 										.filter(Objects::nonNull)
 										.filter(String.class::isInstance)
 										.map(String.class::cast)
-										.toList())
-								.flatMap(Collection::stream)
-								.toList());
-					}
-					else { // Single Custom Class
-						stringsToFilter.addAll(
-								Stream.of(innerFields)
-									.filter(isFilterableField)
-										.map(nf -> AccessHelper.findPropertyValue(nf, propVal))
-									.filter(Objects::nonNull)
-									.filter(String.class::isInstance)
-									.map(String.class::cast)
-									.toList());
-					}
+										.toList());
+	
+						}
 				});
 		
 		return stringsToFilter;
 	}
 	
-	
-	private List<Object> findPropertyValueList(Class<?> targetClass, T value) {
-		return Stream.of(targetClass.getDeclaredFields())
+	private List<Object> getFilterableFieldValues(Class<?> instanceClass, T instance) {
+		return Stream.of(instanceClass.getDeclaredFields())
 				.filter(isFilterableField)
-				.map(f -> AccessHelper.findPropertyValue(f, value)).toList();
+				.map(f -> readFieldValue.apply(f, instance)).toList();
 	}
 }
