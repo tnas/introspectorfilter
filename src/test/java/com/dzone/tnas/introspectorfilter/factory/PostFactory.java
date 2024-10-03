@@ -25,7 +25,11 @@ public class PostFactory {
 					var hashtags = IntStream.rangeClosed(1, numHashtags)
 							.mapToObj(k -> faker.ancient().hero()).toList();
 					
-					return new Post(i, hashtags, comments, faker.lorem().paragraph());
+					return new Post(i, hashtags, comments, faker.lorem().paragraph(), faker.number().randomDigit());
 				}).toList();
+	}
+	
+	public static void printList(List<Post> postsCollection) {
+		postsCollection.stream().forEach(System.out::println);
 	}
 }

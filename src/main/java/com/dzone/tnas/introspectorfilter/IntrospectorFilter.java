@@ -14,6 +14,7 @@ import java.util.function.BiFunction;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
+import org.apache.commons.lang3.ClassUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import com.dzone.tnas.introspectorfilter.annotation.Filterable;
@@ -78,10 +79,10 @@ public class IntrospectorFilter<T> implements InMemoryFilter {
 		fieldsValueList.stream()
 				.filter(Objects::nonNull)
 				.forEach(fieldValue -> {
-				
+					
 					switch (fieldValue) {
 						case String strPropVal -> stringsToFilter.add(strPropVal);
-						
+					
 						case Collection<?> innerCollection -> {
 	
 							if (innerCollection.isEmpty()) {
@@ -89,7 +90,7 @@ public class IntrospectorFilter<T> implements InMemoryFilter {
 							}
 							
 							var firstCollectionElement = innerCollection.iterator().next();
-							
+							 
 							if (firstCollectionElement instanceof String) {
 								stringsToFilter.addAll((Collection<String>) innerCollection);
 							} else {
@@ -112,15 +113,23 @@ public class IntrospectorFilter<T> implements InMemoryFilter {
 										.flatMap(Collection::stream).toList());
 							}
 						}
-						default -> // Single Custom Class
-							stringsToFilter.addAll(
-									Stream.of(fieldValue.getClass().getDeclaredFields())
+						default -> {
+							
+							if (ClassUtils.isPrimitiveWrapper(fieldValue.getClass())) {
+								stringsToFilter.add(fieldValue.toString());
+							} else {
+								// Custom Class
+								stringsToFilter.addAll(
+										Stream.of(fieldValue.getClass().getDeclaredFields())
 										.filter(isFilterableField)
 										.map(f -> readFieldValue.apply(f, fieldValue))
 										.filter(Objects::nonNull)
 										.filter(String.class::isInstance)
 										.map(String.class::cast)
 										.toList());
+							}
+							
+						}
 	
 						}
 				});

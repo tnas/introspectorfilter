@@ -22,30 +22,39 @@ class IntrospectorFilterTest {
     public static void setUp() {
         filter = new IntrospectorFilter<>();
         postsCollection = PostFactory.generateList(10, 3, 2, new Random(2024));
+//        PostFactory.printList(postsCollection);
     }
 
     @Test
-    void shouldFilterByTextInPublication() {
+    void shouldFilterByTextInPublications() {
     	var filteredList = postsCollection.stream().filter(p -> filter.filter(p, "quis")).toList();
         assertEquals(2, filteredList.size());
         assertEquals(1, filteredList.getFirst().getId());
-        assertEquals(5, filteredList.getLast().getId());
+        assertEquals(8, filteredList.getLast().getId());
     }
     
     @Test
     void shouldFilterByHashtags() {
-    	var filteredList = postsCollection.stream().filter(p -> filter.filter(p, "Andromeda")).toList();
+    	var filteredList = postsCollection.stream().filter(p -> filter.filter(p, "Abderus")).toList();
         assertEquals(1, filteredList.size());
         assertEquals(7, filteredList.getFirst().getId());
-        assertEquals("George Newnes", filteredList.getFirst().getComments().getFirst().getReview());
+        assertEquals("Faber and Faber", filteredList.getFirst().getComments().getFirst().getReview());
     }
     
     @Test
     void shouldFilterByReviewInComments() {
-    	var filteredList = postsCollection.stream().filter(p -> filter.filter(p, "Packt")).toList();
+    	var filteredList = postsCollection.stream().filter(p -> filter.filter(p, "Jenkins")).toList();
         assertEquals(1, filteredList.size());
         assertEquals(3, filteredList.getFirst().getId());
-        assertEquals("McFarland & Company", filteredList.getFirst().getComments().getFirst().getReview());
+        assertEquals("Blackstaff Press", filteredList.getFirst().getComments().getFirst().getReview());
+    }
+    
+    @Test
+    void shouldFilterIntegerRelevanceInPublications() {
+    	var filteredList = postsCollection.stream().filter(p -> filter.filter(p, 8)).toList();
+        assertEquals(3, filteredList.size());
+        assertEquals(3, filteredList.getFirst().getId());
+        assertEquals(9, filteredList.getLast().getId());
         assertTrue(ClassUtils.isPrimitiveWrapper(Integer.class));
     }
 }
