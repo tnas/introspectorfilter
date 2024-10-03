@@ -13,11 +13,15 @@ public class Post extends Publication {
 
     @Filterable
     private List<Comment> comments;
+    
+    @Filterable
+    private Author author;
 
-    public Post(long id, List<String> hashtags, List<Comment> comments, String text, int relevance) {
+    public Post(long id, List<String> hashtags, List<Comment> comments, Author author, String text, int relevance) {
 		this.id = id;
 		this.hashtags = hashtags;
 		this.comments = comments;
+		this.author = author;
 		this.setText(text);
 		this.setRelevance(relevance);
 	}
@@ -46,10 +50,18 @@ public class Post extends Publication {
         this.comments = comments;
     }
 
+	public Author getAuthor() {
+		return author;
+	}
+
+	public void setAuthor(Author author) {
+		this.author = author;
+	}
+
 	@Override
 	public String toString() {
-		return "Post [id=" + id + ", hashtags=" + hashtags + ", comments=" + comments + 
-				", relevance = " + getRelevance() + ", text = " + getText() + "]";
+		return "Post [id=" + id + ", hashtags=" + hashtags + ", comments=" + comments +
+				", author = " + author + ", relevance = " + getRelevance() + ", text = " + getText() + "]";
 	}
     
     

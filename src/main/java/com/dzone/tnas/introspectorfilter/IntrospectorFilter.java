@@ -128,10 +128,8 @@ public class IntrospectorFilter<T> implements InMemoryFilter {
 										.map(String.class::cast)
 										.toList());
 							}
-							
 						}
-	
-						}
+					}
 				});
 		
 		return stringsToFilter;
