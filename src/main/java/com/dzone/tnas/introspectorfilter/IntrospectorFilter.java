@@ -138,6 +138,8 @@ public class IntrospectorFilter<T> implements InMemoryFilter {
 		var fieldsValueList = new ArrayList<>();
 		Class<?> currentClass = value.getClass();
 
+		fieldsValueList.addAll(readFilterableFieldValues.apply(value));
+		
 		do {
 			fieldsValueList.addAll(this.getFilterableFieldValues(currentClass, value));
 			currentClass = currentClass.getSuperclass();
