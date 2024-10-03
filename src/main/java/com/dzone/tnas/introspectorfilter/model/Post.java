@@ -1,8 +1,8 @@
 package com.dzone.tnas.introspectorfilter.model;
 
-import com.dzone.tnas.introspectorfilter.annotation.Filterable;
-
 import java.util.List;
+
+import com.dzone.tnas.introspectorfilter.annotation.Filterable;
 
 public class Post extends Publication {
 

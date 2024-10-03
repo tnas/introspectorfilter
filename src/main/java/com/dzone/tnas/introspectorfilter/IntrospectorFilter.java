@@ -63,6 +63,7 @@ public class IntrospectorFilter<T> implements InMemoryFilter {
 							.anyMatch(this.hierarchicalAnnotations::contains));
 	}
 
+	@SuppressWarnings("unchecked")
 	private List<String> findStringsToFilter(T value) {
 
 		var stringsToFilter = new ArrayList<String>();
@@ -86,23 +87,30 @@ public class IntrospectorFilter<T> implements InMemoryFilter {
 							if (innerCollection.isEmpty()) {
 								return;
 							}
-	
+							
 							var firstCollectionElement = innerCollection.iterator().next();
-							var fieldsCollectionElement = new ArrayList<Field>();
-							Class<?> elementClass = firstCollectionElement.getClass();
-	
-							do {
-								fieldsCollectionElement.addAll(Arrays.asList(elementClass.getDeclaredFields()));
-								elementClass = elementClass.getSuperclass();
-							} while (isValidParentClass(elementClass));
-	
-							var filterableFields = fieldsCollectionElement.stream().filter(isFilterableField).toList();
-	
-							stringsToFilter.addAll(innerCollection.stream()
-									.map(e -> filterableFields.stream().map(f -> readFieldValue.apply(f, e))
-											.filter(Objects::nonNull).filter(String.class::isInstance)
-											.map(String.class::cast).toList())
-									.flatMap(Collection::stream).toList());
+							
+							if (firstCollectionElement instanceof String) {
+								stringsToFilter.addAll((Collection<String>) innerCollection);
+							} else {
+								
+								var fieldsCollectionElement = new ArrayList<Field>();
+								
+								Class<?> elementClass = firstCollectionElement.getClass();
+								
+								do {
+									fieldsCollectionElement.addAll(Arrays.asList(elementClass.getDeclaredFields()));
+									elementClass = elementClass.getSuperclass();
+								} while (isValidParentClass(elementClass));
+								
+								var filterableFields = fieldsCollectionElement.stream().filter(isFilterableField).toList();
+								
+								stringsToFilter.addAll(innerCollection.stream()
+										.map(e -> filterableFields.stream().map(f -> readFieldValue.apply(f, e))
+												.filter(Objects::nonNull).filter(String.class::isInstance)
+												.map(String.class::cast).toList())
+										.flatMap(Collection::stream).toList());
+							}
 						}
 						default -> // Single Custom Class
 							stringsToFilter.addAll(

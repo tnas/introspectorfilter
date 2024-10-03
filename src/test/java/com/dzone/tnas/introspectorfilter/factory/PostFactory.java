@@ -12,9 +12,9 @@ public class PostFactory {
 
 	private PostFactory() { }
 	
-	public static List<Post> generateList(int size, int commentsPerPost, int numHashtags) {
+	public static List<Post> generateList(int size, int commentsPerPost, int numHashtags, Random random) {
 		
-		var faker = new Faker(new Random(2024));
+		var faker = new Faker(random);
 		
 		return IntStream.range(0, size)
 				.mapToObj(i -> {
