@@ -11,6 +11,7 @@ import java.util.Locale;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.BiFunction;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
@@ -25,14 +26,24 @@ public class IntrospectorFilter<T> implements InMemoryFilter {
 	private final Predicate<Field> isFilterableField = f ->
 			Stream.of(f.getAnnotations()).anyMatch(a -> a.annotationType() == Filterable.class);
 			
-	private BiFunction<Field, Object, Object> readFieldValue = (field, instance) -> {
-		try {
-			return new PropertyDescriptor(field.getName(), instance.getClass()).getReadMethod().invoke(instance);
-		} catch (Exception e) {
-			throw new IntrospectionRuntimeException(e);
-		}
+	private final BiFunction<Field, Object, Object> readFieldValue = (field, instance) -> {
+			try {
+				return new PropertyDescriptor(field.getName(), instance.getClass()).getReadMethod().invoke(instance);
+			} catch (Exception e) {
+				throw new IntrospectionRuntimeException(e);
+			}
 	};
 
+	private final Function<Object, List<Object>> readFilterableFieldValues = fieldValue ->
+			Stream.of(fieldValue.getClass().getDeclaredFields())
+				.filter(isFilterableField)	
+				.map(f -> readFieldValue.apply(f, fieldValue))
+				.filter(Objects::nonNull)
+				.toList();
+	
+	private final Predicate<Object> isStringOrWrapper = fieldValue ->
+			fieldValue instanceof String || ClassUtils.isPrimitiveWrapper(fieldValue.getClass());
+	
 	private final Set<Class<? extends Annotation>> hierarchicalAnnotations;
 
 	@SafeVarargs
@@ -87,7 +98,7 @@ public class IntrospectorFilter<T> implements InMemoryFilter {
 	
 							if (innerCollection.isEmpty()) {
 								return;
-							}
+							} 
 							
 							var firstCollectionElement = innerCollection.iterator().next();
 							 
@@ -113,24 +124,34 @@ public class IntrospectorFilter<T> implements InMemoryFilter {
 										.flatMap(Collection::stream).toList());
 							}
 						}
-						default -> {
-							
-							if (ClassUtils.isPrimitiveWrapper(fieldValue.getClass())) {
-								stringsToFilter.add(fieldValue.toString());
-							} else {
-								// Custom Class
-								stringsToFilter.addAll(
-										Stream.of(fieldValue.getClass().getDeclaredFields())
-										.filter(isFilterableField)
-										.map(f -> readFieldValue.apply(f, fieldValue))
-										.filter(Objects::nonNull)
-										.filter(String.class::isInstance)
-										.map(String.class::cast)
-										.toList());
-							}
-						}
+						default -> stringsToFilter.addAll(this.getStringsToFilterFromSingleClass(fieldValue));
 					}
 				});
+		
+		return stringsToFilter;
+	}
+	
+	private List<String> getStringsToFilterFromSingleClass(Object fieldValue) {
+		
+		var stringsToFilter = new ArrayList<String>();
+		
+		if (isStringOrWrapper.test(fieldValue)) {
+			stringsToFilter.add(fieldValue.toString());
+			return stringsToFilter;
+		}
+		
+		var fieldsValueToCheck = new ArrayList<Object>(readFilterableFieldValues.apply(fieldValue));
+		
+		while (!fieldsValueToCheck.isEmpty()) {
+			
+			var inFieldValue = fieldsValueToCheck.removeFirst();
+			
+			if (isStringOrWrapper.test(inFieldValue)) {
+				stringsToFilter.add(inFieldValue.toString());
+			} else {
+				fieldsValueToCheck.addAll(readFilterableFieldValues.apply(inFieldValue));
+			}
+		}
 		
 		return stringsToFilter;
 	}
