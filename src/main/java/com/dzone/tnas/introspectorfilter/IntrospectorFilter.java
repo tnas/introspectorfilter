@@ -131,6 +131,28 @@ public class IntrospectorFilter<T> implements InMemoryFilter {
 		return stringsToFilter;
 	}
 	
+	@SuppressWarnings("unchecked")
+	private List<String> findStringsToFilterNew(T value) {
+
+		var stringsToFilter = new ArrayList<String>();
+		var fieldsValueList = new ArrayList<>();
+		Class<?> currentClass = value.getClass();
+
+		do {
+			fieldsValueList.addAll(this.getFilterableFieldValues(currentClass, value));
+			currentClass = currentClass.getSuperclass();
+		} while (isValidParentClass(currentClass));
+
+		fieldsValueList.stream()
+				.filter(Objects::nonNull)
+				.forEach(fieldValue -> {
+					
+				});
+		
+		return stringsToFilter;
+	}
+	
+	
 	private List<String> getStringsToFilterFromSingleClass(Object fieldValue) {
 		
 		var stringsToFilter = new ArrayList<String>();

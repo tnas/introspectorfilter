@@ -29,7 +29,7 @@ public class PostFactory {
 					
 					return new Post(i, hashtags, comments, 
 							new Author(i, faker.name().name(), 
-									new Address(i, faker.address().country(), faker.address().city())),
+									new Address(i, faker.address().country(), faker.address().city(), faker.address().streetName())),
 							faker.lorem().paragraph(), faker.number().randomDigit());
 				}).toList();
 	}
