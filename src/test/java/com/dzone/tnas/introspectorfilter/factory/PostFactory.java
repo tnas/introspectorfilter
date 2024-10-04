@@ -1,14 +1,14 @@
 package com.dzone.tnas.introspectorfilter.factory;
 
-import java.util.List;
-import java.util.Random;
-import java.util.stream.IntStream;
-
 import com.dzone.tnas.introspectorfilter.model.Address;
 import com.dzone.tnas.introspectorfilter.model.Author;
 import com.dzone.tnas.introspectorfilter.model.Comment;
 import com.dzone.tnas.introspectorfilter.model.Post;
 import com.github.javafaker.Faker;
+
+import java.util.List;
+import java.util.Random;
+import java.util.stream.IntStream;
 
 public class PostFactory {
 
@@ -35,6 +35,6 @@ public class PostFactory {
 	}
 	
 	public static void printList(List<Post> postsCollection) {
-		postsCollection.stream().forEach(System.out::println);
+		postsCollection.forEach(System.out::println);
 	}
 }

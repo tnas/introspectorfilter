@@ -22,15 +22,24 @@ public class IntrospectorFilter implements PrimeFacesGlobalFilter {
 
 	private final Predicate<Field> isFilterableField = f ->
 			Stream.of(f.getAnnotations()).anyMatch(a -> a.annotationType() == Filterable.class);
-			
-	private final Set<Class<? extends Annotation>> hierarchicalAnnotations;
 
 	private final ExceptionWrapper wrapper;
 
+	private final Set<Class<? extends Annotation>> hierarchicalAnnotations;
+	private final int height;
+	private final int width;
+
 	@SafeVarargs
-    public IntrospectorFilter(Class<? extends Annotation> ... annotations) {
+	public IntrospectorFilter(int height, int width, Class<? extends Annotation> ... annotations) {
 		this.hierarchicalAnnotations = Set.of(annotations);
 		this.wrapper = new ExceptionWrapper();
+		this.height = height;
+		this.width = width;
+	}
+
+	@SafeVarargs
+    public IntrospectorFilter(Class<? extends Annotation> ... annotations) {
+		this(Integer.MAX_VALUE, Integer.MAX_VALUE, annotations);
 	}
 
 	public Boolean filter(Object value, Object filter) {
@@ -42,8 +51,8 @@ public class IntrospectorFilter implements PrimeFacesGlobalFilter {
 		
 		String textFilter = Objects.isNull(filter) ? null : StringUtils.stripAccents(filter.toString().trim().toLowerCase());
 
-		final Predicate<String> containsTextFilter = s -> 
-			Objects.nonNull(s) && StringUtils.stripAccents(s.toLowerCase()).contains(textFilter);
+		final Predicate<String> containsTextFilter = s ->
+				Objects.nonNull(s) && StringUtils.stripAccents(s.toLowerCase()).contains(textFilter);
 		
 		return StringUtils.isBlank(textFilter) || this.findStringsToFilter(value).stream().anyMatch(containsTextFilter);
 	}
@@ -54,10 +63,13 @@ public class IntrospectorFilter implements PrimeFacesGlobalFilter {
 		var fieldsValueList = new ArrayList<>();
 
 		fieldsValueList.add(value);
+		int widthHop = 0;
+		int heightHop = 0;
 
-		while (!fieldsValueList.isEmpty()) { // BFS for relationships
+		while (!fieldsValueList.isEmpty() && widthHop <= this.width) { // BFS for relationships
 
 			var fieldValue = fieldsValueList.removeFirst();
+			widthHop++;
 
 			if (Objects.isNull(fieldValue)) {
 				continue;
@@ -65,10 +77,11 @@ public class IntrospectorFilter implements PrimeFacesGlobalFilter {
 
 			var fieldValueClass = fieldValue.getClass();
 
-			do { // Hierarchical DFS
+			do { // Hierarchical traversing
 				fieldsValueList.addAll(this.readFilterableFieldValues(fieldValue, fieldValueClass));
 				fieldValueClass = fieldValueClass.getSuperclass();
-			} while (isValidParentClass(fieldValueClass));
+				heightHop++;
+			} while (isValidParentClass(fieldValueClass) && heightHop <= this.height);
 
 			if (isStringOrWrapper(fieldValue)) {
 				stringsToFilter.add(fieldValue.toString());
