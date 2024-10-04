@@ -66,7 +66,7 @@ public class IntrospectorFilter<T> implements InMemoryFilter {
 			var fieldValueClass = fieldValue.getClass();
 
 			do { // Hierarchical DFS
-				fieldsValueList.addAll(this.readFilterableFieldValues(fieldValueClass, fieldValue));
+				fieldsValueList.addAll(this.readFilterableFieldValues(fieldValue, fieldValueClass));
 				fieldValueClass = fieldValueClass.getSuperclass();
 			} while (isValidParentClass(fieldValueClass));
 
@@ -75,7 +75,7 @@ public class IntrospectorFilter<T> implements InMemoryFilter {
 			} else if (fieldValue instanceof Collection<?> innerCollection) {
 				fieldsValueList.addAll(innerCollection);
 			} else { // Single class
-				fieldsValueList.addAll(readFilterableFieldValues(fieldValue));
+				fieldsValueList.addAll(readFilterableFieldValues(fieldValue, fieldValue.getClass()));
 			}
 		}
 
@@ -94,18 +94,12 @@ public class IntrospectorFilter<T> implements InMemoryFilter {
 						.anyMatch(this.hierarchicalAnnotations::contains));
 	}
 
-	private List<Object> readFilterableFieldValues(Object instance) {
-		return Stream.of(instance.getClass().getDeclaredFields())
-				.filter(isFilterableField)
-				.map(this.wrapper.wrap(f -> new PropertyDescriptor(f.getName(), instance.getClass()).getReadMethod().invoke(instance)))
-				.filter(Objects::nonNull)
-				.toList();
-	}
-
-	private List<Object> readFilterableFieldValues(Class<?> instanceClass, Object instance) {
+	private List<Object> readFilterableFieldValues(Object instance, Class<?> instanceClass) {
 		return Stream.of(instanceClass.getDeclaredFields())
 				.filter(isFilterableField)
-				.map(this.wrapper.wrap(f -> new PropertyDescriptor(f.getName(), instance.getClass()).getReadMethod().invoke(instance)))
+				.map(this.wrapper.wrap(f -> new PropertyDescriptor(f.getName(), instance.getClass()).getReadMethod()
+						.invoke(instance)))
+				.filter(Objects::nonNull)
 				.toList();
 	}
 }
