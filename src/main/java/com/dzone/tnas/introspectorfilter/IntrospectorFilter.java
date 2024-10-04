@@ -1,5 +1,6 @@
 package com.dzone.tnas.introspectorfilter;
 
+import com.dzone.tnas.introspectorfilter.adapter.PrimeFacesGlobalFilter;
 import com.dzone.tnas.introspectorfilter.annotation.Filterable;
 import com.dzone.tnas.introspectorfilter.exception.ExceptionWrapper;
 import org.apache.commons.lang3.ClassUtils;
@@ -17,7 +18,7 @@ import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
-public class IntrospectorFilter<T> implements InMemoryFilter {
+public class IntrospectorFilter implements PrimeFacesGlobalFilter {
 
 	private final Predicate<Field> isFilterableField = f ->
 			Stream.of(f.getAnnotations()).anyMatch(a -> a.annotationType() == Filterable.class);
@@ -36,7 +37,6 @@ public class IntrospectorFilter<T> implements InMemoryFilter {
 		return this.filter(value, filter, Locale.getDefault());
 	}
 	
-	@SuppressWarnings("unchecked")
 	@Override
 	public Boolean filter(Object value, Object filter, Locale locale) {
 		
@@ -45,10 +45,10 @@ public class IntrospectorFilter<T> implements InMemoryFilter {
 		final Predicate<String> containsTextFilter = s -> 
 			Objects.nonNull(s) && StringUtils.stripAccents(s.toLowerCase()).contains(textFilter);
 		
-		return StringUtils.isBlank(textFilter) || this.findStringsToFilter((T) value).stream().anyMatch(containsTextFilter);
+		return StringUtils.isBlank(textFilter) || this.findStringsToFilter(value).stream().anyMatch(containsTextFilter);
 	}
 
-	private List<String> findStringsToFilter(T value) {
+	private List<String> findStringsToFilter(Object value) {
 
 		var stringsToFilter = new ArrayList<String>();
 		var fieldsValueList = new ArrayList<>();

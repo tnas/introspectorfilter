@@ -1,27 +1,25 @@
 package com.dzone.tnas.introspectorfilter;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import com.dzone.tnas.introspectorfilter.factory.PostFactory;
+import com.dzone.tnas.introspectorfilter.model.Post;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.Random;
 
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
-
-import com.dzone.tnas.introspectorfilter.factory.PostFactory;
-import com.dzone.tnas.introspectorfilter.model.Post;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class IntrospectorFilterTest {
 
-    private static IntrospectorFilter<Post> filter;
+    private static IntrospectorFilter filter;
     private static List<Post> postsCollection;
 
     @BeforeAll
     public static void setUp() {
-        filter = new IntrospectorFilter<>();
+        filter = new IntrospectorFilter();
         postsCollection = PostFactory.generateList(10, 3, 2, new Random(2024));
-//        PostFactory.printList(postsCollection);
     }
 
     @Test
