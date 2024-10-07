@@ -1,15 +1,16 @@
 package com.dzone.tnas.introspectorfilter;
 
-import com.dzone.tnas.introspectorfilter.factory.PostFactory;
-import com.dzone.tnas.introspectorfilter.model.Post;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 import java.util.Random;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+
+import com.dzone.tnas.introspectorfilter.factory.PostFactory;
+import com.dzone.tnas.introspectorfilter.model.Post;
 
 class CalibratedIntrospectorFilterTest {
 
@@ -44,7 +45,7 @@ class CalibratedIntrospectorFilterTest {
     }
 
     @Test
-    void shouldFilterByHashtagsWithWidth1() {
+    void shouldFilterByHashtagsWithWidth0() {
         var filter = new IntrospectorFilter(0, 1);
         var filteredList = postsCollection.stream().filter(p -> filter.filter(p, "Hecuba")).toList();
         assertEquals(1, filteredList.size());
