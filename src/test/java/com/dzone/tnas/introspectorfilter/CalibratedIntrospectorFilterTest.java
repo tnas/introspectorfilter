@@ -45,11 +45,27 @@ class CalibratedIntrospectorFilterTest {
     }
 
     @Test
-    void shouldFilterByHashtagsWithWidth0() {
+    void shouldFilterByHashtagsWithWidth1() {
         var filter = new IntrospectorFilter(0, 1);
         var filteredList = postsCollection.stream().filter(p -> filter.filter(p, "Hecuba")).toList();
         assertEquals(1, filteredList.size());
         assertEquals(7, filteredList.getFirst().getId());
         assertEquals("Mapin Publishing", filteredList.getFirst().getComments().getFirst().getReview());
+    }
+    
+    @Test
+    void shouldNotFilterByAddressWithBreadth1() {
+        var filter = new IntrospectorFilter(2, 1);
+        var filteredList = postsCollection.stream().filter(p -> filter.filter(p, "Moldova")).toList();
+        assertTrue(filteredList.isEmpty());
+    }
+    
+    @Test
+    void shouldFilterByAddressWithBreadth2() {
+        var filter = new IntrospectorFilter(0, 2);
+        var filteredList = postsCollection.stream().filter(p -> filter.filter(p, "Moldova")).toList();
+        assertEquals(1, filteredList.size());
+        assertEquals(6, filteredList.getFirst().getId());
+        assertEquals("Keshashire", filteredList.getFirst().getAuthor().getAddress().getCity());
     }
 }

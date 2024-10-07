@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
@@ -63,6 +64,17 @@ public class IntrospectorFilter implements PrimeFacesGlobalFilter {
 		var stringsToFilter = new ArrayList<String>();
 		var nodesList = new ArrayList<Node>();
 
+		Consumer<Node> consumerNode = node -> {
+			var fieldValue = node.value();
+			if (isStringOrWrapper(fieldValue)) {
+				stringsToFilter.add(fieldValue.toString());
+			} else if (fieldValue instanceof Collection<?> innerCollection) {
+				nodesList.addAll(innerCollection.stream().map(o -> new Node(node.height(), node.breadth() + 1, o)).toList());
+			} else { // Single class
+				nodesList.add(new Node(node.height(), node.breadth() + 1, fieldValue));
+			}
+		};
+		
 		nodesList.add(new Node(0, 0, value));
 
 		while (!nodesList.isEmpty()) { // BFS for relationships
@@ -78,17 +90,13 @@ public class IntrospectorFilter implements PrimeFacesGlobalFilter {
 
 			int heightHop = node.height();
 			do { // Hierarchical traversing
-				nodesList.addAll(this.readFilterableNodes(fieldValue, fieldValueClass, heightHop, node.breadth()));
+				this.readFilterableBreadthRelationships(node, fieldValueClass, heightHop).forEach(consumerNode);
 				fieldValueClass = fieldValueClass.getSuperclass(); 
 				heightHop++;
 			} while (isValidParentClass(fieldValueClass) && heightHop <= this.heightBound);
 
 			if (isStringOrWrapper(fieldValue)) {
 				stringsToFilter.add(fieldValue.toString());
-			} else if (fieldValue instanceof Collection<?> innerCollection) {
-				nodesList.addAll(innerCollection.stream().map(o -> new Node(node.height(), node.breadth() + 1, o)).toList());
-			} else { // Single class
-				nodesList.addAll(readFilterableNodes(fieldValue, fieldValue.getClass(), node.height(), node.breadth() + 1));
 			}
 		}
 
@@ -107,13 +115,15 @@ public class IntrospectorFilter implements PrimeFacesGlobalFilter {
 						.anyMatch(this.hierarchicalAnnotations::contains));
 	}
 
-	private List<Node> readFilterableNodes(Object instance, Class<?> instanceClass, int height, int breadth) {
+	private List<Node> readFilterableBreadthRelationships(Node node, Class<?> instanceClass, int height) {
+		var instance = node.value();
 		return Stream.of(instanceClass.getDeclaredFields())
 				.filter(isFilterableField)
 				.map(this.wrapper.wrap(f -> new PropertyDescriptor(f.getName(), instance.getClass()).getReadMethod()
 						.invoke(instance)))
 				.filter(Objects::nonNull)
-				.map(o -> new Node(height, breadth, o))
+				.map(o -> new Node(height, node.breadth(), o))
 				.toList();
 	}
+	
 }
