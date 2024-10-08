@@ -29,5 +29,4 @@ class IntrospectorFilterMassiveTest {
         assertFalse(filteredList.isEmpty());
         assertEquals(75, filteredList.size());
     }
-    
 }

@@ -6,7 +6,6 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Locale;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Predicate;
@@ -15,11 +14,10 @@ import java.util.stream.Stream;
 import org.apache.commons.lang3.ClassUtils;
 import org.apache.commons.lang3.StringUtils;
 
-import com.dzone.tnas.introspectorfilter.adapter.PrimeFacesGlobalFilter;
 import com.dzone.tnas.introspectorfilter.annotation.Filterable;
 import com.dzone.tnas.introspectorfilter.exception.ExceptionWrapper;
 
-public class IntrospectorFilter implements PrimeFacesGlobalFilter {
+public class IntrospectorFilter {
 
 	private final Predicate<Field> isFilterableField = f ->
 			Stream.of(f.getAnnotations()).anyMatch(a -> a.annotationType() == Filterable.class);
@@ -43,11 +41,6 @@ public class IntrospectorFilter implements PrimeFacesGlobalFilter {
 		this(Integer.MAX_VALUE, Integer.MAX_VALUE, annotations);
 	}
 
-	@Override
-	public Boolean filter(Object value, Object filter, Locale locale) {
-		return this.filter(value, filter);
-	}
-	
 	public Boolean filter(Object value, Object filter) {
 		
 		if (Objects.isNull(filter)) {
