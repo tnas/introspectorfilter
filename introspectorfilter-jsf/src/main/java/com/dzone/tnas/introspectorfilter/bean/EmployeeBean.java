@@ -1,10 +1,13 @@
-package com.dzone.tnas.introspectorfilter;
+package com.dzone.tnas.introspectorfilter.bean;
 
 import java.util.List;
 
 import javax.annotation.PostConstruct;
 import javax.faces.bean.ManagedBean;
 import javax.faces.bean.ViewScoped;
+
+import com.dzone.tnas.introspectorfilter.DataService;
+import com.dzone.tnas.introspectorfilter.Employee;
 
 
 @ManagedBean
