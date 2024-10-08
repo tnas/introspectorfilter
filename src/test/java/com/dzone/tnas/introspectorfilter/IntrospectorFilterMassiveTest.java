@@ -1,14 +1,16 @@
-package com.dzone.tnas.introspectorfilter.factory;
+package com.dzone.tnas.introspectorfilter;
 
-import com.dzone.tnas.introspectorfilter.IntrospectorFilter;
-import com.dzone.tnas.introspectorfilter.model.Post;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 import java.util.List;
 import java.util.Random;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+
+import com.dzone.tnas.introspectorfilter.factory.PostFactory;
+import com.dzone.tnas.introspectorfilter.model.Post;
 
 class IntrospectorFilterMassiveTest {
 
@@ -22,9 +24,10 @@ class IntrospectorFilterMassiveTest {
     }
 
     @Test
-    void shouldFilterBySomeString() {
+    void shouldFilterBySomeKnownString() {
         var filteredList = postsCollection.stream().filter(p -> filter.filter(p, "vitae")).toList();
         assertFalse(filteredList.isEmpty());
-        System.out.println(filteredList.size());
+        assertEquals(75, filteredList.size());
     }
+    
 }

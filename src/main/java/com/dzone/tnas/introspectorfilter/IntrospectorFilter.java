@@ -9,7 +9,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.Set;
-import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
@@ -44,37 +43,20 @@ public class IntrospectorFilter implements PrimeFacesGlobalFilter {
 		this(Integer.MAX_VALUE, Integer.MAX_VALUE, annotations);
 	}
 
-	public Boolean filter(Object value, Object filter) {
-		return this.filter(value, filter, Locale.getDefault());
-	}
-	
 	@Override
 	public Boolean filter(Object value, Object filter, Locale locale) {
-		
-		String textFilter = Objects.isNull(filter) ? null : StringUtils.stripAccents(filter.toString().trim().toLowerCase());
-
-		final Predicate<String> containsTextFilter = s ->
-				Objects.nonNull(s) && StringUtils.stripAccents(s.toLowerCase()).contains(textFilter);
-		
-		return StringUtils.isBlank(textFilter) || this.findStringsToFilter(value).stream().anyMatch(containsTextFilter);
+		return this.filter(value, filter);
 	}
 	
-	private List<String> findStringsToFilter(Object value) {
-
-		var stringsToFilter = new ArrayList<String>();
+	public Boolean filter(Object value, Object filter) {
+		
+		if (Objects.isNull(filter)) {
+			return true;
+		}
+		
+		String textFilter = StringUtils.stripAccents(filter.toString().trim().toLowerCase());
 		var nodesList = new ArrayList<Node>();
 
-		Consumer<Node> consumerNode = node -> {
-			var fieldValue = node.value();
-			if (isStringOrWrapper(fieldValue)) {
-				stringsToFilter.add(fieldValue.toString());
-			} else if (fieldValue instanceof Collection<?> innerCollection) {
-				nodesList.addAll(innerCollection.stream().map(o -> new Node(node.height(), node.breadth() + 1, o)).toList());
-			} else { // Single class
-				nodesList.add(new Node(node.height(), node.breadth() + 1, fieldValue));
-			}
-		};
-		
 		nodesList.add(new Node(0, 0, value));
 
 		while (!nodesList.isEmpty()) { // BFS for relationships
@@ -90,21 +72,29 @@ public class IntrospectorFilter implements PrimeFacesGlobalFilter {
 
 			int heightHop = node.height();
 			do { // Hierarchical traversing
-				this.readFilterableBreadthRelationships(node, fieldValueClass, heightHop).forEach(consumerNode);
+				
+				if (Objects.nonNull(this.searchInRelationships(node, fieldValueClass, heightHop, textFilter, nodesList))) {
+					return true;
+				}
+				
 				fieldValueClass = fieldValueClass.getSuperclass(); 
 				heightHop++;
 			} while (isValidParentClass(fieldValueClass) && heightHop <= this.heightBound);
 
-			if (isStringOrWrapper(fieldValue)) {
-				stringsToFilter.add(fieldValue.toString());
+			if (isStringOrWrapper(fieldValue) && containsTextFilter(fieldValue.toString(), textFilter)) {
+				return true;
 			}
 		}
-
-		return stringsToFilter;
+		
+		return false;
 	}
 	
 	private boolean isStringOrWrapper(Object fieldValue) {
 		return fieldValue instanceof String || ClassUtils.isPrimitiveWrapper(fieldValue.getClass());
+	}
+	
+	private boolean containsTextFilter(String text, String filter) {
+		return Objects.nonNull(text) && StringUtils.stripAccents(text.toLowerCase()).contains(filter);
 	}
 
 	private boolean isValidParentClass(Class<?> parentClass) {
@@ -115,15 +105,33 @@ public class IntrospectorFilter implements PrimeFacesGlobalFilter {
 						.anyMatch(this.hierarchicalAnnotations::contains));
 	}
 
-	private List<Node> readFilterableBreadthRelationships(Node node, Class<?> instanceClass, int height) {
+	private Node searchInRelationships(Node node, Class<?> instanceClass, final int height, String textFilter, List<Node> nodesList) {
+		
 		var instance = node.value();
+		
+		Predicate<Node> matchTextFilter = n -> {
+			
+			var fieldValue = n.value();
+			
+			if (isStringOrWrapper(fieldValue)) {
+				return containsTextFilter(fieldValue.toString(), textFilter);
+			} else if (fieldValue instanceof Collection<?> innerCollection) {
+				nodesList.addAll(innerCollection.stream().map(o -> new Node(n.height(), n.breadth() + 1, o)).toList());
+			} else { // Single class
+				nodesList.add(new Node(n.height(), n.breadth() + 1, fieldValue));
+			}
+			
+			return false;
+		};
+		
 		return Stream.of(instanceClass.getDeclaredFields())
 				.filter(isFilterableField)
 				.map(this.wrapper.wrap(f -> new PropertyDescriptor(f.getName(), instance.getClass()).getReadMethod()
 						.invoke(instance)))
 				.filter(Objects::nonNull)
 				.map(o -> new Node(height, node.breadth(), o))
-				.toList();
+				.filter(matchTextFilter)
+				.findFirst()
+				.orElse(null);
 	}
-	
 }
