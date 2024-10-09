@@ -9,7 +9,7 @@ import java.util.Random;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
-import com.dzone.tnas.introspectorfilter.factory.PostFactory;
+import com.dzone.tnas.introspectorfilter.util.PostFactory;
 import com.dzone.tnas.introspectorfilter.model.Post;
 
 class IntrospectorFilterMassiveTest {

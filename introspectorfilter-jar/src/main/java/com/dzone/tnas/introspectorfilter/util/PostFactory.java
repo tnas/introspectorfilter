@@ -1,4 +1,4 @@
-package com.dzone.tnas.introspectorfilter.factory;
+package com.dzone.tnas.introspectorfilter.util;
 
 import com.dzone.tnas.introspectorfilter.model.Address;
 import com.dzone.tnas.introspectorfilter.model.Author;
@@ -22,7 +22,7 @@ public class PostFactory {
 				.mapToObj(i -> {
 					
 					var comments = IntStream.range(0, commentsPerPost)
-							.mapToObj(j -> new Comment(i * commentsPerPost + j, faker.book().publisher()))
+							.mapToObj(j -> new Comment((long) i * commentsPerPost + j, faker.book().publisher()))
 							.toList();
 					var hashtags = IntStream.rangeClosed(1, numHashtags)
 							.mapToObj(k -> faker.ancient().hero()).toList();

@@ -1,21 +1,11 @@
-package com.dzone.tnas.introspectorfilter;
-
-import com.dzone.tnas.introspectorfilter.annotation.Filterable;
+package com.dzone.tnas.introspectorfilter.model;
 
 public class Employee {
 	
 	private long id;
-	
-	@Filterable
 	private String name;
-	
-	@Filterable
 	private String phoneNumber;
-	
-	@Filterable
 	private String address;
-	
-	@Filterable
 	private String department;
 
 	public long getId() {

@@ -1,6 +1,6 @@
 package com.dzone.tnas.introspectorfilter;
 
-import com.dzone.tnas.introspectorfilter.factory.PostFactory;
+import com.dzone.tnas.introspectorfilter.util.PostFactory;
 import com.dzone.tnas.introspectorfilter.model.Post;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;

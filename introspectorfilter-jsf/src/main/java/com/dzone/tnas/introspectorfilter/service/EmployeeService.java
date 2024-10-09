@@ -1,17 +1,18 @@
-package com.dzone.tnas.introspectorfilter;
+package com.dzone.tnas.introspectorfilter.service;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import com.dzone.tnas.introspectorfilter.model.Employee;
 import org.fluttercode.datafactory.impl.DataFactory;
 
-public enum DataService {
+public enum EmployeeService {
     INSTANCE;
     private List<Employee> employeeList = new ArrayList<>();
     List<String> departments = Arrays.asList("HR", "Admin", "IT", "Sales");
 
-    DataService() {
+    EmployeeService() {
         DataFactory dataFactory = new DataFactory();
 
         for (int i = 1; i < 50; i++) {

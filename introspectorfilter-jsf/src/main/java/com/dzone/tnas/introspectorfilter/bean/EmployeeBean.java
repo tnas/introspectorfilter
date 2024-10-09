@@ -6,8 +6,8 @@ import javax.annotation.PostConstruct;
 import javax.faces.bean.ManagedBean;
 import javax.faces.bean.ViewScoped;
 
-import com.dzone.tnas.introspectorfilter.DataService;
-import com.dzone.tnas.introspectorfilter.Employee;
+import com.dzone.tnas.introspectorfilter.service.EmployeeService;
+import com.dzone.tnas.introspectorfilter.model.Employee;
 
 
 @ManagedBean
@@ -19,7 +19,7 @@ public class EmployeeBean {
 
     @PostConstruct
     public void postConstruct() {
-        employeeList = DataService.INSTANCE.getEmployeeList();
+        employeeList = EmployeeService.INSTANCE.getEmployeeList();
     }
 
     public List<Employee> getEmployeeList() {
@@ -35,6 +35,6 @@ public class EmployeeBean {
     }
 
     public List<String> getDeptList(){
-        return DataService.INSTANCE.getDepartments();
+        return EmployeeService.INSTANCE.getDepartments();
     }
 }
