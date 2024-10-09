@@ -19,26 +19,34 @@ import com.dzone.tnas.introspectorfilter.exception.ExceptionWrapper;
 
 public class IntrospectorFilter {
 
-	private final Predicate<Field> isFilterableField = f ->
-			Stream.of(f.getAnnotations()).anyMatch(a -> a.annotationType() == Filterable.class);
-
 	private final ExceptionWrapper wrapper;
 
 	private final Set<Class<? extends Annotation>> hierarchicalAnnotations;
+	private Class<? extends Annotation> relationshipsAnnotation;
 	private final int heightBound;
 	private final int breadthBound;
 
+	private final Predicate<Field> isFilterableField = f ->
+			Stream.of(f.getAnnotations()).anyMatch(a -> a.annotationType() == relationshipsAnnotation);
+
 	@SafeVarargs
-	public IntrospectorFilter(int height, int breadth, Class<? extends Annotation> ... annotations) {
-		this.hierarchicalAnnotations = Set.of(annotations);
-		this.wrapper = new ExceptionWrapper();
+	public IntrospectorFilter(Class<? extends Annotation> annotationFilter, int height, int breadth,
+							  Class<? extends Annotation> ... annotations) {
+		this.relationshipsAnnotation = annotationFilter;
 		this.heightBound = height;
 		this.breadthBound = breadth;
+		this.hierarchicalAnnotations = Set.of(annotations);
+		this.wrapper = new ExceptionWrapper();
+	}
+
+	@SafeVarargs
+	public IntrospectorFilter(int height, int breadth, Class<? extends Annotation> ... annotations) {
+		this(Filterable.class, height, breadth, annotations);
 	}
 
 	@SafeVarargs
     public IntrospectorFilter(Class<? extends Annotation> ... annotations) {
-		this(Integer.MAX_VALUE, Integer.MAX_VALUE, annotations);
+		this(Filterable.class, Integer.MAX_VALUE, Integer.MAX_VALUE, annotations);
 	}
 
 	public Boolean filter(Object value, Object filter) {
