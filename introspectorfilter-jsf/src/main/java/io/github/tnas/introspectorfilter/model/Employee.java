@@ -1,4 +1,4 @@
-package com.dzone.tnas.introspectorfilter.model;
+package io.github.tnas.introspectorfilter.model;
 
 public class Employee {
 	

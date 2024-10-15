@@ -1,11 +1,12 @@
-package com.dzone.tnas.introspectorfilter.service;
+package io.github.tnas.introspectorfilter.service;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import com.dzone.tnas.introspectorfilter.model.Employee;
 import org.fluttercode.datafactory.impl.DataFactory;
+
+import io.github.tnas.introspectorfilter.model.Employee;
 
 public enum EmployeeService {
     INSTANCE;

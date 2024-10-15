@@ -1,4 +1,4 @@
-package com.dzone.tnas.introspectorfilter.bean;
+package io.github.tnas.introspectorfilter.bean;
 
 import java.util.List;
 
@@ -6,8 +6,8 @@ import javax.annotation.PostConstruct;
 import javax.faces.bean.ManagedBean;
 import javax.faces.bean.ViewScoped;
 
-import com.dzone.tnas.introspectorfilter.service.EmployeeService;
-import com.dzone.tnas.introspectorfilter.model.Employee;
+import io.github.tnas.introspectorfilter.model.Employee;
+import io.github.tnas.introspectorfilter.service.EmployeeService;
 
 
 @ManagedBean

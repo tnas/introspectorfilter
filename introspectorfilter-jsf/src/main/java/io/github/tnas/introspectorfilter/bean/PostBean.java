@@ -1,7 +1,7 @@
-package com.dzone.tnas.introspectorfilter.bean;
+package io.github.tnas.introspectorfilter.bean;
 
-import com.dzone.tnas.introspectorfilter.model.Post;
-import com.dzone.tnas.introspectorfilter.service.PostService;
+import io.github.tnas.introspectorfilter.model.Post;
+import io.github.tnas.introspectorfilter.service.PostService;
 
 import javax.annotation.PostConstruct;
 import javax.faces.bean.ManagedBean;

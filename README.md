@@ -7,7 +7,7 @@ the JSF project working (all commands are executed from the project root directo
 - `cd introspectorfilter-jsf`
 - `mvn tomcat7:run-war`
 
-If any dependency errors for the introspectorfilter-jar module are triggered,
+If any dependency errors for the introspectorfilter-core module are triggered,
 go back to the project root directory and run:
 - `mvn clean install`
 - run the previous two commands again

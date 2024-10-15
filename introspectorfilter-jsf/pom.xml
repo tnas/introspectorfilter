@@ -8,7 +8,7 @@
 	<parent>
 		<groupId>com.dzone.tnas</groupId>
 		<artifactId>introspectorfilter</artifactId>
-		<version>0.0.1-SNAPSHOT</version>
+		<version>1.0.0</version>
 	</parent>
 
 	<artifactId>introspectorfilter-jsf</artifactId>
@@ -19,7 +19,7 @@
 	<dependencies>
 		<dependency>
 			<groupId>com.dzone.tnas</groupId>
-			<artifactId>introspectorfilter-jar</artifactId>
+			<artifactId>introspectorfilter-core</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>org.primefaces</groupId>
@@ -45,6 +45,37 @@
 			<groupId>org.fluttercode.datafactory</groupId>
 			<artifactId>datafactory</artifactId>
 			<version>0.8</version>
+		</dependency>
+		<dependency>
+			<groupId>org.junit.jupiter</groupId>
+			<artifactId>junit-jupiter-engine</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.junit.jupiter</groupId>
+			<artifactId>junit-jupiter-api</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.junit.jupiter</groupId>
+			<artifactId>junit-jupiter-params</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.junit.platform</groupId>
+			<artifactId>junit-platform-suite</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.github.javafaker</groupId>
+			<artifactId>javafaker</artifactId>
+			<version>${javafaker.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.jeasy</groupId>
+			<artifactId>easy-random</artifactId>
+			<version>${easy.random.version}</version>
+			<type>pom</type>
 		</dependency>
 	</dependencies>
 

@@ -2,23 +2,53 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-	
+
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.dzone.tnas</groupId>
 	<artifactId>introspectorfilter</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>1.0.0</version>
 	<packaging>pom</packaging>
-	<name>introspectorfilter</name>
+	<name>Introspector Filter</name>
+	<description>
+		A simple tool for filtering collections through annotation-driven introspection.
+	</description>
 	<url>https://github.com/tnas/introspectorfilter</url>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<maven.compiler.release>21</maven.compiler.release>
+		<commons.lang3.version>3.17.0</commons.lang3.version>
+		<easy.random.version>5.0.0</easy.random.version>
+		<javafaker.version>1.0.2</javafaker.version>
 	</properties>
 
+	<licenses>
+		<license>
+			<name>The Apache Software License, Version 2.0</name>
+			<url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+			<distribution>repo</distribution>
+		</license>
+	</licenses>
+
+	<developers>
+		<developer>
+			<id>tnas</id>
+			<name>Thiago Nascimento</name>
+			<email>nascimenthiago@gmail.com</email>
+			<organizationUrl>http://nascimentothiago.rf.gd/</organizationUrl>
+		</developer>
+	</developers>
+	
+	<scm>
+		<connection>scm:git:git://github.com/tnas/introspectorfilter.git</connection>
+		<developerConnection>
+			scm:git:ssh://github.com:tnas/introspectorfilter.git</developerConnection>
+		<url>http://github.com/tnas/introspectorfilter/tree/master</url>
+	</scm>	
+
 	<modules>
+		<module>introspectorfilter-core</module>
 		<module>introspectorfilter-jsf</module>
-		<module>introspectorfilter-jar</module>
 	</modules>
 
 	<dependencyManagement>
@@ -26,55 +56,20 @@
 			<dependency>
 				<groupId>org.junit</groupId>
 				<artifactId>junit-bom</artifactId>
-				<version>5.11.0</version>
+				<version>5.11.2</version>
 				<type>pom</type>
 				<scope>import</scope>
 			</dependency>
 			<dependency>
 				<groupId>com.dzone.tnas</groupId>
-				<artifactId>introspectorfilter-jar</artifactId>
-				<version>0.0.1-SNAPSHOT</version>
+				<artifactId>introspectorfilter-core</artifactId>
+				<version>${project.version}</version>
 			</dependency>
 		</dependencies>
 	</dependencyManagement>
-	<dependencies>
-		<dependency>
-			<groupId>org.junit.jupiter</groupId>
-			<artifactId>junit-jupiter-engine</artifactId>
-			<scope>test</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.junit.jupiter</groupId>
-			<artifactId>junit-jupiter-api</artifactId>
-			<scope>test</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.junit.jupiter</groupId>
-			<artifactId>junit-jupiter-params</artifactId>
-			<scope>test</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.junit.platform</groupId>
-			<artifactId>junit-platform-suite</artifactId>
-			<scope>test</scope>
-		</dependency>
-		<dependency>
-			<groupId>com.github.javafaker</groupId>
-			<artifactId>javafaker</artifactId>
-			<version>1.0.2</version>
-		</dependency>
-		<dependency>
-			<groupId>org.jeasy</groupId>
-			<artifactId>easy-random</artifactId>
-			<version>5.0.0</version>
-			<type>pom</type>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.commons</groupId>
-			<artifactId>commons-lang3</artifactId>
-			<version>3.17.0</version>
-		</dependency>
-	</dependencies>
+	
+	<dependencies/>
+	
 	<build>
 		<pluginManagement>
 			<plugins>

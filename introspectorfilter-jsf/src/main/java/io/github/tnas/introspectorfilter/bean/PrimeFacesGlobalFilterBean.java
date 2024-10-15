@@ -1,4 +1,4 @@
-package com.dzone.tnas.introspectorfilter.bean;
+package io.github.tnas.introspectorfilter.bean;
 
 import java.util.Locale;
 
@@ -6,7 +6,7 @@ import javax.annotation.PostConstruct;
 import javax.faces.bean.ManagedBean;
 import javax.faces.bean.ViewScoped;
 
-import com.dzone.tnas.introspectorfilter.IntrospectorFilter;
+import io.github.tnas.introspectorfilter.IntrospectorFilter;
 
 @ManagedBean
 @ViewScoped

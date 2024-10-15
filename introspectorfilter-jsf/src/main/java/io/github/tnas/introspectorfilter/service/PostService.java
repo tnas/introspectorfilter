@@ -1,7 +1,7 @@
-package com.dzone.tnas.introspectorfilter.service;
+package io.github.tnas.introspectorfilter.service;
 
-import com.dzone.tnas.introspectorfilter.model.Post;
-import com.dzone.tnas.introspectorfilter.util.PostFactory;
+import io.github.tnas.introspectorfilter.model.Post;
+import io.github.tnas.introspectorfilter.util.PostFactory;
 
 import java.util.List;
 import java.util.Random;
