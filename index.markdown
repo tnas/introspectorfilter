@@ -8,13 +8,15 @@ This library provides an effortless way to filter collections in Java based on a
 
 ## Usage
 
-<p>In pom.xml, add following between <code>&lt;dependencies&gt; ... &lt;/dependencies&gt;</code></p>
+In the **pom.xml** file, add following dependency:
 
-<div class="highlight highlight-text-xml"><pre>&lt;<span class="pl-ent">dependency</span>&gt;
-    &lt;<span class="pl-ent">groupId</span>&gt;io.github.tnas&lt;/<span class="pl-ent">groupId</span>&gt;
-    &lt;<span class="pl-ent">artifactId</span>&gt;introspectorfilter&lt;/<span class="pl-ent">artifactId</span>&gt;
-    &lt;<span class="pl-ent">version</span>&gt;0.1.0&lt;/<span class="pl-ent">version</span>&gt;
-&lt;/<span class="pl-ent">dependency</span>&gt;</pre></div>
+```xml
+<dependency>
+    <groupId>io.github.tnas</groupId>
+    <artifactId>introspectorfilter</artifactId>
+    <version>1.0.0</version>
+</dependency>
+```
 
 ## Javadoc
 
