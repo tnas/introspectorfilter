@@ -1,0 +1,1 @@
+packageSearchIndex = [{"l":"All Packages","u":"allpackages-index.html"},{"l":"io.github.tnas.introspectorfilter"},{"l":"io.github.tnas.introspectorfilter.annotation"},{"l":"io.github.tnas.introspectorfilter.exception"}];updateSearchResults();
