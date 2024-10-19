@@ -15,7 +15,7 @@
     <packaging>jar</packaging>
     <version>1.0.0</version>
     <name>Introspector Filter - Core</name>
-    <url>http://maven.apache.org</url>
+    <url>https://tnas.github.io/introspectorfilter/</url>
 
     <dependencies>
         <dependency>
