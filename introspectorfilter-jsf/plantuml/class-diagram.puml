@@ -1,0 +1,38 @@
+@startuml
+
+skinparam classAttributeIconSize 0
+
+abstract class Publication {
+    - @Filterable text: String
+    - @Filterable relevance: int
+}
+class Post {
+    - id: long
+    - @Filterable hashtags: List<String>
+    - @Filterable comments: List<Comment>
+    - @Filterable author: Author
+}
+class Comment {
+    - id: long
+    - @Filterable review: String
+}
+class Author {
+    - id: long
+    - @Filterable name: String
+    - @Filterable address: Address
+}
+class Address {
+    - @Filterable country: String
+    - city: String
+}
+abstract class Location {
+    - @Filterable description: String
+}
+
+Publication <|-- Post
+Post -down-> "*" Comment
+Post -right-> "1" Author
+Author -right-> "1" Address
+Location <|-- Address
+
+@enduml
