@@ -8,10 +8,11 @@
 	<parent>
 		<groupId>io.github.tnas</groupId>
 		<artifactId>introspectorfilter</artifactId>
-		<version>1.0.0</version>
+		<version>${revision}</version>
 	</parent>
 
 	<artifactId>introspectorfilter-jsf</artifactId>
+	<version>${revision}</version>
 	<packaging>war</packaging>
 	<name>Introspector Filter - JSF Use Case</name>
 
@@ -19,7 +20,7 @@
 		<dependency>
 			<groupId>io.github.tnas</groupId>
 			<artifactId>introspectorfilter-core</artifactId>
-			<version>1.0.0</version>
+			<version>${project.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.primefaces</groupId>
@@ -82,25 +83,12 @@
 	<build>
 		<plugins>
 			<plugin>
-				<artifactId>maven-deploy-plugin</artifactId>
-				<configuration>
-					<skip>true</skip>
-				</configuration>
-			</plugin>
-			<plugin>
 				<artifactId>maven-war-plugin</artifactId>
-				<configuration>
-					<failOnMissingWebXml>false</failOnMissingWebXml>
-				</configuration>
 			</plugin>
 			<!-- mvn tomcat7:run-war -->
 			<plugin>
 				<groupId>org.apache.tomcat.maven</groupId>
 				<artifactId>tomcat7-maven-plugin</artifactId>
-				<version>2.2</version>
-				<configuration>
-					<path>/</path>
-				</configuration>
 			</plugin>
 		</plugins>
 	</build>
