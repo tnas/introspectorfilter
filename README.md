@@ -15,3 +15,6 @@ go back to the project root directory and run:
 The JSF (Primefaces) project can be accessed via the URL
 [http://localhost:8080/posts.xhtml](http://localhost:8080/posts.xhtml)
 
+## JDK
+The tool requires at least **Java 21 version** to run.
+
