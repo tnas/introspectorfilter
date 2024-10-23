@@ -17,6 +17,9 @@ In the **pom.xml** file, add the following dependency:
     <version>1.0.0</version>
 </dependency>
 ```
+## Class Diagram (Example)
+<img class="image" src="{{ site.baseurl }}/assets/class-diagram.png">
+
 ## Filtering Collections
 
 ```java
