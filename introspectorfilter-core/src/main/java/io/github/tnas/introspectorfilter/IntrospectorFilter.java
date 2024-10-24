@@ -3,12 +3,12 @@ package io.github.tnas.introspectorfilter;
 import java.beans.PropertyDescriptor;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.ClassUtils;
@@ -56,7 +56,7 @@ public class IntrospectorFilter {
 		}
 		
 		String textFilter = StringUtils.stripAccents(filter.toString().trim().toLowerCase());
-		var nodesList = new ArrayList<Node>();
+		var nodesList = new NodeList();
 
 		nodesList.add(new Node(0, 0, value));
 
@@ -64,14 +64,14 @@ public class IntrospectorFilter {
 
 			var node = nodesList.removeFirst();
 			
-			if (node.height() > this.heightBound || node.breadth() > this.breadthBound) {
+			if (node.getHeight() > this.heightBound || node.getBreadth() > this.breadthBound) {
 				continue;
 			}
 			
-			var fieldValue = node.value();
+			var fieldValue = node.getValue();
 			var fieldValueClass = fieldValue.getClass();
 
-			int heightHop = node.height();
+			int heightHop = node.getHeight();
 			do { // Hierarchical traversing
 				
 				if (Objects.nonNull(this.searchInRelationships(node, fieldValueClass, heightHop, textFilter, nodesList))) {
@@ -108,18 +108,21 @@ public class IntrospectorFilter {
 
 	private Node searchInRelationships(Node node, Class<?> instanceClass, final int height, String textFilter, List<Node> nodesList) {
 		
-		var instance = node.value();
+		var instance = node.getValue();
 		
 		Predicate<Node> matchTextFilter = n -> {
 			
-			var fieldValue = n.value();
+			var fieldValue = n.getValue();
 			
 			if (isStringOrWrapper(fieldValue)) {
 				return containsTextFilter(fieldValue.toString(), textFilter);
-			} else if (fieldValue instanceof Collection<?> innerCollection) {
-				nodesList.addAll(innerCollection.stream().map(o -> new Node(n.height(), n.breadth() + 1, o)).toList());
+			} else if (fieldValue instanceof Collection<?>) {
+				var innerCollection = (Collection<?>) fieldValue;
+				nodesList.addAll(innerCollection.stream()
+						.map(o -> new Node(n.getHeight(), n.getBreadth() + 1, o))
+						.collect(Collectors.toList()));
 			} else { // Single class
-				nodesList.add(new Node(n.height(), n.breadth() + 1, fieldValue));
+				nodesList.add(new Node(n.getHeight(), n.getBreadth() + 1, fieldValue));
 			}
 			
 			return false;
@@ -130,7 +133,7 @@ public class IntrospectorFilter {
 				.map(this.wrapper.wrap(f -> new PropertyDescriptor(f.getName(), instance.getClass()).getReadMethod()
 						.invoke(instance)))
 				.filter(Objects::nonNull)
-				.map(o -> new Node(height, node.breadth(), o))
+				.map(o -> new Node(height, node.getBreadth(), o))
 				.filter(matchTextFilter)
 				.findFirst()
 				.orElse(null);

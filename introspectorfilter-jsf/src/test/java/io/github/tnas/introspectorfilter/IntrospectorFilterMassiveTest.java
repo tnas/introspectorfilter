@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 
 import java.util.List;
 import java.util.Random;
+import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -25,7 +26,7 @@ class IntrospectorFilterMassiveTest {
 
     @Test
     void shouldFilterBySomeKnownString() {
-        var filteredList = postsCollection.stream().filter(p -> filter.filter(p, "vitae")).toList();
+        var filteredList = postsCollection.stream().filter(p -> filter.filter(p, "vitae")).collect(Collectors.toList());
         assertFalse(filteredList.isEmpty());
         assertEquals(75, filteredList.size());
     }

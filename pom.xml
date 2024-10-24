@@ -17,7 +17,7 @@
     <properties>
         <revision>1.0.0</revision>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.release>21</maven.compiler.release>
+        <maven.compiler.release>11</maven.compiler.release>
         <commons.lang3.version>3.17.0</commons.lang3.version>
         <easy.random.version>5.0.0</easy.random.version>
         <javafaker.version>1.0.2</javafaker.version>
