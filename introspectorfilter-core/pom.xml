@@ -13,7 +13,6 @@
 
     <artifactId>introspectorfilter-core</artifactId>
     <packaging>jar</packaging>
-    <version>${revision}</version>
     <name>Introspector Filter - Core</name>
     <url>https://tnas.github.io/introspectorfilter/</url>
 

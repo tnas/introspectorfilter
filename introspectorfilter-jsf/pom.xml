@@ -12,7 +12,6 @@
 	</parent>
 
 	<artifactId>introspectorfilter-jsf</artifactId>
-	<version>${revision}</version>
 	<packaging>war</packaging>
 	<name>Introspector Filter - JSF Use Case</name>
 
