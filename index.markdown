@@ -33,8 +33,6 @@ The tool (and the respective examples not using it) uses the
 [Apache Commons Lang](https://commons.apache.org/proper/commons-lang/){:target="_blank"}
 `StringUtils` class to removes diacritics (~= accents) from strings. 
 
-The examples below assume that a `List<Post>` collection is provided.
-
 Assumptions:
 - A `List<Post> postsCollection` is provided to be filtered.
 - A primitive type value (`textFilter`) to be used as a filter is provided.
