@@ -15,7 +15,7 @@
     <url>https://tnas.github.io/introspectorfilter/</url>
 
     <properties>
-        <revision>0.1.0</revision>
+        <revision>0.1.1</revision>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.release>11</maven.compiler.release>
         <commons.lang3.version>3.17.0</commons.lang3.version>
@@ -55,6 +55,18 @@
 
     <dependencyManagement>
         <dependencies>
+        	<dependency>
+        		<groupId>io.github.tnas</groupId>
+                <artifactId>introspectorfilter-core</artifactId>
+                <version>${project.version}</version>
+                <type>jar</type>
+        	</dependency>
+        	<dependency>
+        		<groupId>io.github.tnas</groupId>
+                <artifactId>introspectorfilter-jsf</artifactId>
+                <version>${project.version}</version>
+                <type>war</type>
+        	</dependency>
             <dependency>
                 <groupId>org.junit</groupId>
                 <artifactId>junit-bom</artifactId>

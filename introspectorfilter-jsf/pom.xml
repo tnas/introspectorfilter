@@ -19,7 +19,6 @@
 		<dependency>
 			<groupId>io.github.tnas</groupId>
 			<artifactId>introspectorfilter-core</artifactId>
-			<version>${project.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.primefaces</groupId>
