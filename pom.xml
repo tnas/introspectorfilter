@@ -180,9 +180,11 @@
                 <groupId>org.sonatype.central</groupId>
                 <artifactId>central-publishing-maven-plugin</artifactId>
             </plugin>
+            <!--
             <plugin>
                 <artifactId>maven-gpg-plugin</artifactId>
             </plugin>
+            -->
             <plugin>
                 <artifactId>maven-toolchains-plugin</artifactId>
             </plugin>
