@@ -27,7 +27,7 @@ public class IntrospectorFilter {
 	private final int breadthBound;
 
 	private final Predicate<Field> isFilterableField = f ->
-			Stream.of(f.getAnnotations()).anyMatch(a -> a.annotationType() == relationshipsAnnotation);
+			Stream.of(f.getAnnotations()).anyMatch(a -> a.annotationType().equals(relationshipsAnnotation));
 
 	@SafeVarargs
 	public IntrospectorFilter(Class<? extends Annotation> annotationFilter, int height, int breadth,
@@ -51,7 +51,7 @@ public class IntrospectorFilter {
 
 	public Boolean filter(Object value, Object filter) {
 		
-		if (Objects.isNull(filter)) {
+		if (Objects.isNull(filter) || StringUtils.isAllBlank(filter.toString())) {
 			return true;
 		}
 		
