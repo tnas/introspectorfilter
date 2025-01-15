@@ -22,6 +22,7 @@
 		<commons.lang3.version>3.17.0</commons.lang3.version>
 		<easy.random.version>5.0.0</easy.random.version>
 		<javafaker.version>1.0.2</javafaker.version>
+		<instancio.version>5.2.1</instancio.version>
 	</properties>
 
 	<licenses>

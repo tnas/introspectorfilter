@@ -1,0 +1,17 @@
+package io.github.tnas.introspectorfilter.lieberherr;
+
+import io.github.tnas.introspectorfilter.annotation.Filterable;
+
+public class Person {
+
+    @Filterable
+    private String name;
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+}
