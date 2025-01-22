@@ -39,12 +39,10 @@ class IntrospectorFilterTest {
                 .generate(Select.all(List.class), gen -> gen.collection().size(collectionsSize))
                 .create();
 
-        IntStream.range(0, filteredSize).forEach(i -> {
-            graph.get(random.nextInt(0, collectionsSize))
-                    .getBuses().get(random.nextInt(0, collectionsSize))
-                    .getPassengers().get(random.nextInt(0, collectionsSize))
-                    .setName(passengerName);
-        });
+        IntStream.rangeClosed(1, filteredSize).forEach(i -> {
+            var index = collectionsSize - i;
+            graph.get(index).getBuses().get(index).getPassengers().get(index).setName(passengerName);
+    }   );
 
         var result = graph.stream().filter(r -> filter.filter(r, passengerName)).toList();
         assertEquals(filteredSize, result.size());
