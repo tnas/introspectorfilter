@@ -74,7 +74,7 @@ public class IntrospectorFilter {
 			
 			var fieldValue = node.value();
 			var fieldValueClass = fieldValue.getClass();
-			logger.debug("Processing {} class", fieldValueClass.getName());
+			logger.debug("Processing {}", fieldValue);
 
 			int heightHop = node.height();
 			do { // Hierarchical traversing

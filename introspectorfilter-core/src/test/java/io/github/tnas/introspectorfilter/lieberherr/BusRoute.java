@@ -6,6 +6,14 @@ import java.util.List;
 
 public class BusRoute {
 
+    private static int busRoute;
+
+    private final int id;
+
+    public BusRoute() {
+        this.id = busRoute++;
+    }
+
     @Filterable
     private List<Bus> buses;
 
@@ -26,5 +34,12 @@ public class BusRoute {
 
     public void setVillages(List<Village> villages) {
         this.villages = villages;
+    }
+
+    @Override
+    public String toString() {
+        return "BusRoute{" +
+                "id=" + id +
+                '}';
     }
 }

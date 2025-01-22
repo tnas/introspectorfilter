@@ -37,4 +37,11 @@ public class Bus {
     public void setPassengers(List<Person> passengers) {
         this.passengers = passengers;
     }
+
+    @Override
+    public String toString() {
+        return "Bus{" +
+                "name='" + name + '\'' +
+                '}';
+    }
 }

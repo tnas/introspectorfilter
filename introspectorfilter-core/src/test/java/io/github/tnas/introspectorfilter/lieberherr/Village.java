@@ -27,4 +27,11 @@ public class Village {
     public void setBusStops(List<BusStop> busStops) {
         this.busStops = busStops;
     }
+
+    @Override
+    public String toString() {
+        return "Village{" +
+                "name='" + name + '\'' +
+                '}';
+    }
 }

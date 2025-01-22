@@ -7,6 +7,8 @@ import org.instancio.Select;
 import org.instancio.TypeToken;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Random;
@@ -15,6 +17,8 @@ import java.util.stream.IntStream;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class IntrospectorFilterTest {
+
+    Logger logger = LoggerFactory.getLogger(IntrospectorFilterTest.class);
 
     private static IntrospectorFilter filter;
     private static Faker faker;
@@ -33,6 +37,8 @@ class IntrospectorFilterTest {
         var collectionsSize = 10;
         var filteredSize = 3;
         var passengerName = faker.name().name();
+
+        logger.debug("Searching by passenger name {}", passengerName);
 
         var graph = Instancio.of(new TypeToken<List<BusRoute>>() { })
                 .generate(Select.root(), gen -> gen.collection().size(collectionsSize))
