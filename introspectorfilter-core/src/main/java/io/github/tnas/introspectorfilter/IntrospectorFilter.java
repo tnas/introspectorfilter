@@ -8,6 +8,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
@@ -23,6 +25,7 @@ public class IntrospectorFilter {
 
 	Logger logger = LoggerFactory.getLogger(IntrospectorFilter.class);
 
+	private final ExecutorService executor;
 	private final ExceptionWrapper wrapper;
 
 	private final Set<Class<? extends Annotation>> hierarchicalAnnotations;
@@ -41,6 +44,7 @@ public class IntrospectorFilter {
 		this.breadthBound = breadth;
 		this.hierarchicalAnnotations = Set.of(annotations);
 		this.wrapper = new ExceptionWrapper();
+		this.executor = Executors.newCachedThreadPool();
 	}
 
 	@SafeVarargs
