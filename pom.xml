@@ -23,6 +23,7 @@
 		<easy.random.version>5.0.0</easy.random.version>
 		<javafaker.version>1.0.2</javafaker.version>
 		<instancio.version>5.2.1</instancio.version>
+		<sl4f.version>2.0.16</sl4f.version>
 	</properties>
 
 	<licenses>

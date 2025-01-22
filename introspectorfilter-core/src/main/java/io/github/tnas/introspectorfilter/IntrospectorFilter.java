@@ -16,8 +16,12 @@ import org.apache.commons.lang3.StringUtils;
 
 import io.github.tnas.introspectorfilter.annotation.Filterable;
 import io.github.tnas.introspectorfilter.exception.ExceptionWrapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class IntrospectorFilter {
+
+	Logger logger = LoggerFactory.getLogger(IntrospectorFilter.class);
 
 	private final ExceptionWrapper wrapper;
 
@@ -70,6 +74,7 @@ public class IntrospectorFilter {
 			
 			var fieldValue = node.value();
 			var fieldValueClass = fieldValue.getClass();
+			logger.debug("Processing {} class", fieldValueClass.getName());
 
 			int heightHop = node.height();
 			do { // Hierarchical traversing
