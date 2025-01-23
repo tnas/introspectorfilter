@@ -13,7 +13,6 @@ import org.slf4j.LoggerFactory;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
-import java.util.Random;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
@@ -36,9 +35,9 @@ class IntrospectorFilterTest {
     void should_success_no_filter_lieberherr_one_instance() {
 
         var filteredSize = 0;
-        var collectionsSize = 70;
+        var collectionsSize = 300;
         var passengerName = faker.name().name();
-        logger.debug("Searching by passenger name {}", passengerName);
+        logger.info("Searching by passenger name {}", passengerName);
 
         var startSetup = Instant.now();
         logger.info("Preparing collection to test ...");

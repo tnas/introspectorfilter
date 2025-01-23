@@ -1,31 +1,32 @@
 package io.github.tnas.introspectorfilter;
 
+import io.github.tnas.introspectorfilter.annotation.Filterable;
+import io.github.tnas.introspectorfilter.exception.ExceptionWrapper;
+import org.apache.commons.lang3.ClassUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.beans.PropertyDescriptor;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
-
-import org.apache.commons.lang3.ClassUtils;
-import org.apache.commons.lang3.StringUtils;
-
-import io.github.tnas.introspectorfilter.annotation.Filterable;
-import io.github.tnas.introspectorfilter.exception.ExceptionWrapper;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class IntrospectorFilter {
 
 	Logger logger = LoggerFactory.getLogger(IntrospectorFilter.class);
 
 	private final ExecutorService executor;
+	private final int numThreads;
 	private final ExceptionWrapper wrapper;
 
 	private final Set<Class<? extends Annotation>> hierarchicalAnnotations;
@@ -44,7 +45,9 @@ public class IntrospectorFilter {
 		this.breadthBound = breadth;
 		this.hierarchicalAnnotations = Set.of(annotations);
 		this.wrapper = new ExceptionWrapper();
-		this.executor = Executors.newCachedThreadPool();
+		this.numThreads = Runtime.getRuntime().availableProcessors();
+		this.executor = Executors.newFixedThreadPool(numThreads);
+		logger.debug("Executor pool set with {} threads", numThreads);
 	}
 
 	@SafeVarargs
@@ -64,39 +67,57 @@ public class IntrospectorFilter {
 		}
 		
 		String textFilter = StringUtils.stripAccents(filter.toString().trim().toLowerCase());
-		var nodesList = new ArrayList<Node>();
+		var nodesList = new ConcurrentLinkedQueue<Node>();
 
 		nodesList.add(new Node(0, 0, value));
 
-		while (!nodesList.isEmpty()) { // BFS for relationships
+		var foundValue = new AtomicBoolean(false);
 
-			var node = nodesList.removeFirst();
-			
-			if (node.height() > this.heightBound || node.breadth() > this.breadthBound) {
-				continue;
-			}
-			
-			var fieldValue = node.value();
-			var fieldValueClass = fieldValue.getClass();
-			logger.debug("Processing {}", fieldValue);
+		for (var th = 0; th < this.numThreads; ++th) {
 
-			int heightHop = node.height();
-			do { // Hierarchical traversing
-				
-				if (Objects.nonNull(this.searchInRelationships(node, fieldValueClass, heightHop, textFilter, nodesList))) {
-					return true;
+			this.executor.execute(() -> {
+
+				logger.debug("Running Thread-{}", Thread.currentThread().getName());
+
+				while (!nodesList.isEmpty()) { // BFS for relationships
+
+					var node = nodesList.poll();
+
+					if (node.height() > this.heightBound || node.breadth() > this.breadthBound) {
+						continue;
+					}
+
+					var nodeValue = node.value();
+					var nodeValueClass = nodeValue.getClass();
+
+					int heightHop = node.height();
+					do { // Hierarchical traversing
+
+						if (Objects.nonNull(this.searchInRelationships(node, nodeValueClass, heightHop, textFilter, nodesList))) {
+							foundValue.set(true);
+						}
+
+						nodeValueClass = nodeValueClass.getSuperclass();
+						heightHop++;
+					} while (isValidParentClass(nodeValueClass) && heightHop <= this.heightBound);
+
+					if (isStringOrWrapper(nodeValue) && containsTextFilter(nodeValue.toString(), textFilter)) {
+						foundValue.set(true);
+					}
 				}
-				
-				fieldValueClass = fieldValueClass.getSuperclass(); 
-				heightHop++;
-			} while (isValidParentClass(fieldValueClass) && heightHop <= this.heightBound);
-
-			if (isStringOrWrapper(fieldValue) && containsTextFilter(fieldValue.toString(), textFilter)) {
-				return true;
-			}
+			});
 		}
-		
-		return false;
+
+		this.executor.shutdown();
+		try {
+			if (!this.executor.awaitTermination(800, TimeUnit.MILLISECONDS)) {
+				this.executor.shutdownNow();
+			}
+		} catch (InterruptedException e) {
+			this.executor.shutdownNow();
+		}
+
+		return foundValue.get();
 	}
 	
 	private boolean isStringOrWrapper(Object fieldValue) {
@@ -115,7 +136,7 @@ public class IntrospectorFilter {
 						.anyMatch(this.hierarchicalAnnotations::contains));
 	}
 
-	private Node searchInRelationships(Node node, Class<?> instanceClass, final int height, String textFilter, List<Node> nodesList) {
+	private Node searchInRelationships(Node node, Class<?> instanceClass, final int height, String textFilter, Collection<Node> nodesList) {
 		
 		var instance = node.value();
 		
