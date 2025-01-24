@@ -10,6 +10,8 @@ import org.slf4j.LoggerFactory;
 import java.beans.PropertyDescriptor;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
+import java.util.Arrays;
+import java.util.BitSet;
 import java.util.Collection;
 import java.util.Objects;
 import java.util.Set;
@@ -72,39 +74,55 @@ public class IntrospectorFilter {
 		nodesList.add(new Node(0, 0, value));
 
 		var foundValue = new AtomicBoolean(false);
+		var idleThreads = new BitSet(this.numThreads);
 
 		for (var th = 0; th < this.numThreads; ++th) {
 
 			this.executor.execute(() -> {
 
-				logger.debug("Running Thread-{}", Thread.currentThread().getName());
+				final int tid = (int) Thread.currentThread().threadId() % this.numThreads;
+				logger.debug("Running Thread-{}", tid);
 
-				while (!nodesList.isEmpty()) { // BFS for relationships
+				while (idleThreads.stream().count() < this.numThreads) {
 
-					var node = nodesList.poll();
+					while (!nodesList.isEmpty()) { // BFS for relationships
 
-					if (node.height() > this.heightBound || node.breadth() > this.breadthBound) {
-						continue;
-					}
+						var node = nodesList.poll();
 
-					var nodeValue = node.value();
-					var nodeValueClass = nodeValue.getClass();
+						if (Objects.isNull(node)) {
+							idleThreads.set(tid, true);
+						} else {
 
-					int heightHop = node.height();
-					do { // Hierarchical traversing
+							idleThreads.set(tid, false);
 
-						if (Objects.nonNull(this.searchInRelationships(node, nodeValueClass, heightHop, textFilter, nodesList))) {
-							foundValue.set(true);
+							if (node.height() > this.heightBound || node.breadth() > this.breadthBound) {
+								continue;
+							}
+
+							var nodeValue = node.value();
+							var nodeValueClass = nodeValue.getClass();
+
+							logger.debug("Thread-{} processing {}", tid, nodeValue);
+
+							int heightHop = node.height();
+							do { // Hierarchical traversing
+
+								if (Objects.nonNull(this.searchInRelationships(node, nodeValueClass, heightHop, textFilter, nodesList))) {
+									foundValue.set(true);
+								}
+
+								nodeValueClass = nodeValueClass.getSuperclass();
+								heightHop++;
+							} while (isValidParentClass(nodeValueClass) && heightHop <= this.heightBound);
+
+							if (isStringOrWrapper(nodeValue) && containsTextFilter(nodeValue.toString(), textFilter)) {
+								foundValue.set(true);
+							}
 						}
-
-						nodeValueClass = nodeValueClass.getSuperclass();
-						heightHop++;
-					} while (isValidParentClass(nodeValueClass) && heightHop <= this.heightBound);
-
-					if (isStringOrWrapper(nodeValue) && containsTextFilter(nodeValue.toString(), textFilter)) {
-						foundValue.set(true);
 					}
 				}
+
+				logger.debug("Thread-{} is over", tid);
 			});
 		}
 
