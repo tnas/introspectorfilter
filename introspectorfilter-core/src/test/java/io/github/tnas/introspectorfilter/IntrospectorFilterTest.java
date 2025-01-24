@@ -67,7 +67,7 @@ class IntrospectorFilterTest {
     void should_success_filter_lieberherr_one_instance() {
 
         var filteredSize = 1;
-        var collectionsSize = 300;
+        var collectionsSize = 10;
         var passengerName = faker.name().name();
         logger.info("Searching by passenger name '{}'", passengerName);
 

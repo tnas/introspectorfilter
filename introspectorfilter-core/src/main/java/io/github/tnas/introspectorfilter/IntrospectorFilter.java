@@ -19,6 +19,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.BiPredicate;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
@@ -27,16 +28,25 @@ public class IntrospectorFilter {
 	Logger logger = LoggerFactory.getLogger(IntrospectorFilter.class);
 
 	private final ExecutorService executor;
-	private final int numThreads;
+	private int numThreads;
 	private final ExceptionWrapper wrapper;
 
 	private final Set<Class<? extends Annotation>> hierarchicalAnnotations;
 	private Class<? extends Annotation> relationshipsAnnotation;
-	private final int heightBound;
-	private final int breadthBound;
+	private int heightBound;
+	private int breadthBound;
 
 	private final Predicate<Field> isFilterableField = f ->
 			Stream.of(f.getAnnotations()).anyMatch(a -> a.annotationType().equals(relationshipsAnnotation));
+
+	private final Predicate<Node> notToProcessNode = n ->
+			Objects.isNull(n) || n.height() > this.heightBound || n.breadth() > this.breadthBound;
+
+	private final BiPredicate<BitSet, AtomicBoolean> hasActiveThreads = (idleThreads, foundValue) ->
+			idleThreads.stream().count() < this.numThreads && !foundValue.get();
+
+	private final BiPredicate<Collection<Node>, AtomicBoolean> hasPendingWork = (nodesList, foundValue) ->
+			!nodesList.isEmpty() && !foundValue.get();
 
 	@SafeVarargs
 	public IntrospectorFilter(Class<? extends Annotation> annotationFilter, int height, int breadth,
@@ -82,44 +92,25 @@ public class IntrospectorFilter {
 				final int tid = (int) Thread.currentThread().threadId() % this.numThreads;
 				logger.debug("Running Thread-{}", tid);
 
-				while (idleThreads.stream().count() < this.numThreads && !foundValue.get()) {
+				while (hasActiveThreads.test(idleThreads, foundValue)) {
 
-					while (!nodesList.isEmpty() && !foundValue.get()) { // BFS for relationships
+					while (hasPendingWork.test(nodesList, foundValue)) { // BFS for relationships
 
 						var node = nodesList.poll();
 
-						if (Objects.isNull(node)) {
+						if (notToProcessNode.test(node)) {
 							idleThreads.set(tid, true);
-						} else {
-
-							idleThreads.set(tid, false);
-
-							if (node.height() > this.heightBound || node.breadth() > this.breadthBound) {
-								continue;
-							}
-
-							var nodeValue = node.value();
-							var nodeValueClass = nodeValue.getClass();
-
-							logger.debug("Thread-{} processing {}", tid, nodeValue);
-
-							int heightHop = node.height();
-							do { // Hierarchical traversing
-
-								if (Objects.nonNull(this.searchInRelationships(node, nodeValueClass, heightHop, textFilter, nodesList))) {
-									foundValue.set(true);
-									logger.debug("Thread-{} found the searched value '{}'", tid, textFilter);
-								}
-
-								nodeValueClass = nodeValueClass.getSuperclass();
-								heightHop++;
-							} while (isValidParentClass(nodeValueClass) && heightHop <= this.heightBound);
-
-							if (isStringOrWrapper(nodeValue) && containsTextFilter(nodeValue.toString(), textFilter)) {
-								foundValue.set(true);
-								logger.debug("Thread-{} found the searched value '{}'", tid, textFilter);
-							}
+							continue;
 						}
+
+						idleThreads.set(tid, false);
+
+                        assert node != null;
+                        logger.debug("Thread-{} processing {}", tid, node.value());
+
+						this.searchInHierarchy(nodesList, node, foundValue, textFilter, tid);
+
+						this.searchInNodeValue(node, textFilter, foundValue, tid);
 					}
 				}
 
@@ -127,15 +118,7 @@ public class IntrospectorFilter {
 			});
 		}
 
-		this.executor.shutdown();
-		try {
-			if (!this.executor.awaitTermination(800, TimeUnit.MILLISECONDS)) {
-				this.executor.shutdownNow();
-			}
-		} catch (InterruptedException e) {
-			this.executor.shutdownNow();
-			Thread.currentThread().interrupt();
-		}
+		this.shutdownThreadsPool();
 
 		return foundValue.get();
 	}
@@ -148,12 +131,40 @@ public class IntrospectorFilter {
 		return Objects.nonNull(text) && StringUtils.stripAccents(text.toLowerCase()).contains(filter);
 	}
 
+	private void searchInNodeValue(Node node, String textFilter, AtomicBoolean foundValue, int tid) {
+
+		var nodeValue = node.value();
+
+		if (isStringOrWrapper(nodeValue) && containsTextFilter(nodeValue.toString(), textFilter)) {
+			foundValue.set(true);
+			logger.debug("Thread-{} found the searched value '{}'", tid, textFilter);
+		}
+	}
+
 	private boolean isValidParentClass(Class<?> parentClass) {
 		return Objects.nonNull(parentClass) &&
 				(this.hierarchicalAnnotations.isEmpty()
 						|| Stream.of(parentClass.getAnnotations())
 						.map(Annotation::annotationType)
 						.anyMatch(this.hierarchicalAnnotations::contains));
+	}
+
+	private void searchInHierarchy(Collection<Node> nodesList, Node node, AtomicBoolean foundValue, String textFilter, int tid) {
+
+		var nodeValue = node.value();
+		var nodeValueClass = nodeValue.getClass();
+		int heightHop = node.height();
+
+		do { // Hierarchical traversing
+
+			if (Objects.nonNull(this.searchInRelationships(node, nodeValueClass, heightHop, textFilter, nodesList))) {
+				foundValue.set(true);
+				logger.debug("Thread-{} found the searched value '{}'", tid, textFilter);
+			}
+
+			nodeValueClass = nodeValueClass.getSuperclass();
+			heightHop++;
+		} while (isValidParentClass(nodeValueClass) && heightHop <= this.heightBound);
 	}
 
 	private Node searchInRelationships(Node node, Class<?> instanceClass, final int height, String textFilter, Collection<Node> nodesList) {
@@ -184,5 +195,19 @@ public class IntrospectorFilter {
 				.filter(matchTextFilter)
 				.findFirst()
 				.orElse(null);
+	}
+
+	private void shutdownThreadsPool() {
+
+		this.executor.shutdown();
+
+		try {
+			if (!this.executor.awaitTermination(800, TimeUnit.MILLISECONDS)) {
+				this.executor.shutdownNow();
+			}
+		} catch (InterruptedException e) {
+			this.executor.shutdownNow();
+			Thread.currentThread().interrupt();
+		}
 	}
 }
