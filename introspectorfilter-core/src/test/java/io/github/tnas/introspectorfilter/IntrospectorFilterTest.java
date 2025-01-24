@@ -32,7 +32,7 @@ class IntrospectorFilterTest {
     }
 
     @Test
-    void should_success_no_filter_lieberherr_one_instance() {
+    void should_not_find_filter_lieberherr_one_instance() {
 
         var filteredSize = 0;
         var collectionsSize = 10;
@@ -45,6 +45,40 @@ class IntrospectorFilterTest {
         var graph = Instancio.of(BusRoute.class)
                 .generate(Select.all(List.class), gen -> gen.collection().size(collectionsSize))
                 .create();
+
+        var endSetup = Instant.now();
+        logger.info("Collection to test is ready ({} ms)", Duration.between(startSetup, endSetup).toMillis());
+
+        var result = Stream.of(graph)
+                .filter(r -> {
+                    boolean found;
+                    var start = Instant.now();
+                    found = filter.filter(r, passengerName);
+                    var end = Instant.now();
+                    logger.info("Processing {}: elapsed time: {} ms", r, Duration.between(start, end).toMillis());
+                    return found;
+                })
+                .toList();
+
+        assertEquals(filteredSize, result.size());
+    }
+
+    @Test
+    void should_success_filter_lieberherr_one_instance() {
+
+        var filteredSize = 1;
+        var collectionsSize = 300;
+        var passengerName = faker.name().name();
+        logger.info("Searching by passenger name '{}'", passengerName);
+
+        var startSetup = Instant.now();
+        logger.info("Preparing collection to test ...");
+
+        var graph = Instancio.of(BusRoute.class)
+                .generate(Select.all(List.class), gen -> gen.collection().size(collectionsSize))
+                .create();
+        var index = collectionsSize - 1;
+        graph.getBuses().get(index).getPassengers().get(index).setName(passengerName);
 
         var endSetup = Instant.now();
         logger.info("Collection to test is ready ({} ms)", Duration.between(startSetup, endSetup).toMillis());

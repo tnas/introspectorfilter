@@ -10,7 +10,6 @@ import org.slf4j.LoggerFactory;
 import java.beans.PropertyDescriptor;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
-import java.util.Arrays;
 import java.util.BitSet;
 import java.util.Collection;
 import java.util.Objects;
@@ -83,9 +82,9 @@ public class IntrospectorFilter {
 				final int tid = (int) Thread.currentThread().threadId() % this.numThreads;
 				logger.debug("Running Thread-{}", tid);
 
-				while (idleThreads.stream().count() < this.numThreads) {
+				while (idleThreads.stream().count() < this.numThreads && !foundValue.get()) {
 
-					while (!nodesList.isEmpty()) { // BFS for relationships
+					while (!nodesList.isEmpty() && !foundValue.get()) { // BFS for relationships
 
 						var node = nodesList.poll();
 
@@ -109,6 +108,7 @@ public class IntrospectorFilter {
 
 								if (Objects.nonNull(this.searchInRelationships(node, nodeValueClass, heightHop, textFilter, nodesList))) {
 									foundValue.set(true);
+									logger.debug("Thread-{} found the searched value '{}'", tid, textFilter);
 								}
 
 								nodeValueClass = nodeValueClass.getSuperclass();
@@ -117,6 +117,7 @@ public class IntrospectorFilter {
 
 							if (isStringOrWrapper(nodeValue) && containsTextFilter(nodeValue.toString(), textFilter)) {
 								foundValue.set(true);
+								logger.debug("Thread-{} found the searched value '{}'", tid, textFilter);
 							}
 						}
 					}
@@ -133,6 +134,7 @@ public class IntrospectorFilter {
 			}
 		} catch (InterruptedException e) {
 			this.executor.shutdownNow();
+			Thread.currentThread().interrupt();
 		}
 
 		return foundValue.get();
