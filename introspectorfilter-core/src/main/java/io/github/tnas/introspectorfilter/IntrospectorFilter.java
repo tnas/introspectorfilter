@@ -27,7 +27,7 @@ public class IntrospectorFilter {
 
 	Logger logger = LoggerFactory.getLogger(IntrospectorFilter.class);
 
-	private final ExecutorService executor;
+	private ExecutorService executor;
 	private int numThreads;
 	private final ExceptionWrapper wrapper;
 
@@ -58,7 +58,6 @@ public class IntrospectorFilter {
 		this.wrapper = new ExceptionWrapper();
 		this.numThreads = Runtime.getRuntime().availableProcessors();
 		this.executor = Executors.newFixedThreadPool(numThreads);
-		logger.debug("Executor pool set with {} threads", numThreads);
 	}
 
 	@SafeVarargs
@@ -76,7 +75,9 @@ public class IntrospectorFilter {
 		if (Objects.isNull(filter) || StringUtils.isAllBlank(filter.toString())) {
 			return true;
 		}
-		
+
+		logger.debug("Executor pool set with {} threads", numThreads);
+
 		String textFilter = StringUtils.stripAccents(filter.toString().trim().toLowerCase());
 		var nodesList = new ConcurrentLinkedQueue<Node>();
 
@@ -119,6 +120,8 @@ public class IntrospectorFilter {
 		}
 
 		this.shutdownThreadsPool();
+
+		logger.debug("Filtering process finished");
 
 		return foundValue.get();
 	}
@@ -209,5 +212,10 @@ public class IntrospectorFilter {
 			this.executor.shutdownNow();
 			Thread.currentThread().interrupt();
 		}
+	}
+
+	public void setNumThreads(int numThreads) {
+		this.numThreads = numThreads;
+		this.executor = Executors.newFixedThreadPool(this.numThreads);
 	}
 }
