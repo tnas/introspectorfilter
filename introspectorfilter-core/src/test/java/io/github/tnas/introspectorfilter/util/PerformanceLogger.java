@@ -3,6 +3,8 @@ package io.github.tnas.introspectorfilter.util;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 public class PerformanceLogger {
 
@@ -10,11 +12,15 @@ public class PerformanceLogger {
     private static final String RUN_REPORT_FILE = "runtime_report.txt";
 
     public static void initLogMemory() throws IOException {
-        new FileWriter(MEM_REPORT_FILE, false).close();
+        if (Files.notExists(Path.of(MEM_REPORT_FILE))) {
+            new FileWriter(MEM_REPORT_FILE, false).close();
+        }
     }
 
     public static void initRuntimeMemory() throws IOException {
-        new FileWriter(RUN_REPORT_FILE, false).close();
+        if (Files.notExists(Path.of(RUN_REPORT_FILE))) {
+            new FileWriter(RUN_REPORT_FILE, false).close();
+        }
     }
 
     public static void logMemoryUsage(String phase) throws IOException {
@@ -32,6 +38,12 @@ public class PerformanceLogger {
         // Append to report file
         try (FileWriter writer = new FileWriter(MEM_REPORT_FILE, true)) {
             writer.write(report);
+        }
+    }
+
+    public static void logElapsedRuntime(String message) throws IOException {
+        try (FileWriter writer = new FileWriter(RUN_REPORT_FILE, true)) {
+            writer.write(message);
         }
     }
 }

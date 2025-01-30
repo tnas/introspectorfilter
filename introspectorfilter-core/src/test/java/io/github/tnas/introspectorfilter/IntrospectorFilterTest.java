@@ -11,6 +11,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,18 +47,25 @@ class IntrospectorFilterTest {
     }
 
     @BeforeEach
-    void setUpBeforeEach() throws IOException {
+    void setUpBeforeEach(TestInfo testInfo) throws IOException {
         this.filter = new IntrospectorFilter();
         this.loadGraphModel();
-        PerformanceLogger.logMemoryUsage("Before Test");
+        PerformanceLogger.logMemoryUsage(String.format("[%s - Before]", testInfo.getDisplayName()));
         this.start = Instant.now();
     }
 
     @AfterEach
-    void setUpAfterEach() throws IOException {
+    void setUpAfterEach(TestInfo testInfo) throws IOException {
         this.end = Instant.now();
-        PerformanceLogger.logMemoryUsage("After Test");
-        logger.info("Elapsed time: {} ms", Duration.between(this.start, this.end).toMillis());
+        PerformanceLogger.logMemoryUsage(String.format("[%s - After]", testInfo.getDisplayName()));
+        var runtimeMessage = String.format("[%s] Graph size: %d, Collections size: %d, Threads: %d, Elapsed time: %d ms%n",
+                testInfo.getDisplayName(),
+                1,
+                this.getCollectionsSize(),
+                this.getNumThreads(),
+                Duration.between(this.start, this.end).toMillis());
+        logger.info(runtimeMessage);
+        PerformanceLogger.logElapsedRuntime(runtimeMessage);
     }
 
     private int getCollectionsSize() {
@@ -91,7 +99,7 @@ class IntrospectorFilterTest {
     }
 
     @Test
-    void should_success_filter_lieberherr_one_instance() {
+    void lieberherr_one_instance() {
         assertEquals(1, Stream.of(graph).filter(o -> filter.filter(o, passengerName)).count());
     }
 
