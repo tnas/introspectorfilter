@@ -30,5 +30,10 @@ replay_pid*
 /.mvn
 /.settings
 
-IntelliJ files
+# IntelliJ files
 .idea
+
+# Test files
+.flattened-pom.xml
+memory_report.txt
+runtime_report.txt

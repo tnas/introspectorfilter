@@ -95,12 +95,15 @@ public class IntrospectorFilter {
 
 				while (hasActiveThreads.test(idleThreads, foundValue)) {
 
+					logger.debug("Thread-{} will check by pending work", tid);
+
 					while (hasPendingWork.test(nodesList, foundValue)) { // BFS for relationships
 
 						var node = nodesList.poll();
 
 						if (notToProcessNode.test(node)) {
 							idleThreads.set(tid, true);
+							logger.debug("Thread-{} idle", tid);
 							continue;
 						}
 
@@ -159,7 +162,6 @@ public class IntrospectorFilter {
 		int heightHop = node.height();
 
 		do { // Hierarchical traversing
-
 			if (Objects.nonNull(this.searchInRelationships(node, nodeValueClass, heightHop, textFilter, nodesList))) {
 				foundValue.set(true);
 				logger.debug("Thread-{} found the searched value '{}'", tid, textFilter);

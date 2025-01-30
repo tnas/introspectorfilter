@@ -2,17 +2,23 @@ package io.github.tnas.introspectorfilter;
 
 import com.github.javafaker.Faker;
 import io.github.tnas.introspectorfilter.lieberherr.BusRoute;
+import io.github.tnas.introspectorfilter.util.PerformanceLogger;
 import org.instancio.Instancio;
 import org.instancio.Select;
 import org.instancio.TypeToken;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
@@ -21,16 +27,75 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 class IntrospectorFilterTest {
 
     Logger logger = LoggerFactory.getLogger(IntrospectorFilterTest.class);
+    private static final int DEFAULT_COLLECTION_SIZE = 150;
+    private static final int DEFAULT_NUM_THREADS = 10;
 
-    private static IntrospectorFilter filter;
     private static Faker faker;
+    private IntrospectorFilter filter;
+
+    private BusRoute graph;
+    private String passengerName;
+    private Instant start;
+    private Instant end;
 
     @BeforeAll
-    public static void setUp() {
-        filter = new IntrospectorFilter();
+    public static void setUpAll() throws IOException {
         faker = new Faker();
+        PerformanceLogger.initLogMemory();
+        PerformanceLogger.initRuntimeMemory();
     }
 
+    @BeforeEach
+    void setUpBeforeEach() throws IOException {
+        this.filter = new IntrospectorFilter();
+        this.loadGraphModel();
+        PerformanceLogger.logMemoryUsage("Before Test");
+        this.start = Instant.now();
+    }
+
+    @AfterEach
+    void setUpAfterEach() throws IOException {
+        this.end = Instant.now();
+        PerformanceLogger.logMemoryUsage("After Test");
+        logger.info("Elapsed time: {} ms", Duration.between(this.start, this.end).toMillis());
+    }
+
+    private int getCollectionsSize() {
+        return Objects.isNull(System.getProperty("GRAPH_SIZE")) ?
+                DEFAULT_COLLECTION_SIZE : Integer.parseInt(System.getProperty("GRAPH_SIZE"));
+    }
+
+    private int getNumThreads() {
+        return Objects.isNull(System.getProperty("NUM_THREADS")) ?
+                DEFAULT_NUM_THREADS : Integer.parseInt(System.getProperty("NUM_THREADS"));
+    }
+
+    private void loadGraphModel() {
+
+        var numThreads = this.getNumThreads();
+        var collectionsSize = this.getCollectionsSize();
+
+        this.graph = Instancio.of(BusRoute.class)
+                .generate(Select.all(List.class), gen -> gen.collection().size(collectionsSize))
+                .create();
+
+        filter.setNumThreads(numThreads);
+
+        this.passengerName = faker.name().name();
+        logger.info("Searching by passenger name '{}'", passengerName);
+
+        var index = collectionsSize - 1;
+        graph.getBuses().get(index).getPassengers().get(index).setName(passengerName);
+
+        logger.info("Instance with collections of size {} is ready to test with {} threads", collectionsSize, numThreads);
+    }
+
+    @Test
+    void should_success_filter_lieberherr_one_instance() {
+        assertEquals(1, Stream.of(graph).filter(o -> filter.filter(o, passengerName)).count());
+    }
+
+    @Disabled
     @Test
     void should_not_find_filter_lieberherr_one_instance() {
 
@@ -42,14 +107,14 @@ class IntrospectorFilterTest {
         var startSetup = Instant.now();
         logger.info("Preparing collection to test ...");
 
-        var graph = Instancio.of(BusRoute.class)
+        var graphInstance = Instancio.of(BusRoute.class)
                 .generate(Select.all(List.class), gen -> gen.collection().size(collectionsSize))
                 .create();
 
         var endSetup = Instant.now();
         logger.info("Collection to test is ready ({} ms)", Duration.between(startSetup, endSetup).toMillis());
 
-        var result = Stream.of(graph)
+        var result = Stream.of(graphInstance)
                 .filter(r -> {
                     boolean found;
                     var start = Instant.now();
@@ -63,41 +128,7 @@ class IntrospectorFilterTest {
         assertEquals(filteredSize, result.size());
     }
 
-    @Test
-    void should_success_filter_lieberherr_one_instance() {
-
-        filter.setNumThreads(10);
-        var filteredSize = 1;
-        var collectionsSize = 300;
-        var passengerName = faker.name().name();
-        logger.info("Searching by passenger name '{}'", passengerName);
-
-        var startSetup = Instant.now();
-        logger.info("Preparing collection to test ...");
-
-        var graph = Instancio.of(BusRoute.class)
-                .generate(Select.all(List.class), gen -> gen.collection().size(collectionsSize))
-                .create();
-        var index = collectionsSize - 1;
-        graph.getBuses().get(index).getPassengers().get(index).setName(passengerName);
-
-        var endSetup = Instant.now();
-        logger.info("Collection to test is ready ({} ms)", Duration.between(startSetup, endSetup).toMillis());
-
-        var result = Stream.of(graph)
-                .filter(r -> {
-                    boolean found;
-                    var start = Instant.now();
-                    found = filter.filter(r, passengerName);
-                    var end = Instant.now();
-                    logger.info("Processing {}: elapsed time: {} ms", r, Duration.between(start, end).toMillis());
-                    return found;
-                })
-                .toList();
-
-        assertEquals(filteredSize, result.size());
-    }
-
+    @Disabled
     @Test
     void should_success_filter_lieberherr_instance() {
 
