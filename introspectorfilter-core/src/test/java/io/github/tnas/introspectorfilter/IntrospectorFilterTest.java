@@ -36,7 +36,6 @@ class IntrospectorFilterTest {
     private List<BusRoute> graph;
     private String passengerName;
     private Instant start;
-    private Instant end;
 
     @BeforeAll
     public static void setUpAll() throws IOException {
@@ -56,14 +55,14 @@ class IntrospectorFilterTest {
 
     @AfterEach
     void setUpAfterEach(TestInfo testInfo) throws IOException {
-        this.end = Instant.now();
+        var end = Instant.now();
         PerformanceLogger.logMemoryUsage(String.format("[%s - After]", testInfo.getDisplayName()));
         var runtimeMessage = String.format("[%s] Graph size: %d, Collections size: %d, Threads: %d, Elapsed time: %d ms%n",
                 testInfo.getDisplayName(),
                 this.graph.size(),
                 this.getCollectionsSize(),
                 this.getNumThreads(),
-                Duration.between(this.start, this.end).toMillis());
+                Duration.between(this.start, end).toMillis());
         logger.info(runtimeMessage);
         PerformanceLogger.logElapsedRuntime(runtimeMessage);
         this.filter.stop();
