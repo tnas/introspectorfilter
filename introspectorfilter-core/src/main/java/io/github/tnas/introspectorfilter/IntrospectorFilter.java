@@ -88,12 +88,11 @@ public class IntrospectorFilter {
 		var idleThreads = new BitSet(this.numThreads);
 
 		if (this.numThreads == 1) {
-			this.runFilter(nodesList, idleThreads, foundValue, textFilter);
+			this.filter(nodesList, idleThreads, foundValue, textFilter);
 		} else {
 			IntStream.range(0, this.numThreads)
-					.forEach(th -> executor.execute(() -> this.runFilter(nodesList, idleThreads, foundValue, textFilter)));
+					.forEach(th -> executor.execute(() -> this.filter(nodesList, idleThreads, foundValue, textFilter)));
 		}
-
 
 		this.shutdownThreadsPool();
 
@@ -102,7 +101,7 @@ public class IntrospectorFilter {
 		return foundValue.get();
 	}
 
-	private void runFilter(ConcurrentLinkedQueue<Node> nodesList, BitSet idleThreads, AtomicBoolean foundValue, String textFilter) {
+	private void filter(ConcurrentLinkedQueue<Node> nodesList, BitSet idleThreads, AtomicBoolean foundValue, String textFilter) {
 
 		final int tid = (int) Thread.currentThread().threadId() % this.numThreads;
 		logger.debug("Running Thread-{}", tid);
@@ -168,17 +167,18 @@ public class IntrospectorFilter {
 		int heightHop = node.height();
 
 		do { // Hierarchical traversing
-			if (Objects.nonNull(this.searchInRelationships(node, nodeValueClass, heightHop, textFilter, nodesList))) {
+			if (Objects.nonNull(this.searchInRelationships(node, nodeValueClass, heightHop, textFilter, nodesList, foundValue))) {
 				foundValue.set(true);
 				logger.debug("Thread-{} found the searched value '{}'", tid, textFilter);
 			}
 
 			nodeValueClass = nodeValueClass.getSuperclass();
 			heightHop++;
-		} while (isValidParentClass(nodeValueClass) && heightHop <= this.heightBound);
+		} while (isValidParentClass(nodeValueClass) && heightHop <= this.heightBound && !foundValue.get());
 	}
 
-	private Node searchInRelationships(Node node, Class<?> instanceClass, final int height, String textFilter, Collection<Node> nodesList) {
+	private Node searchInRelationships(Node node, Class<?> instanceClass, final int height, String textFilter,
+									   Collection<Node> nodesList, AtomicBoolean foundValue) {
 		
 		var instance = node.value();
 		
@@ -189,9 +189,11 @@ public class IntrospectorFilter {
 			if (isStringOrWrapper(fieldValue)) {
 				return containsTextFilter(fieldValue.toString(), textFilter);
 			} else if (fieldValue instanceof Collection<?> innerCollection) {
-//				nodesList.addAll(innerCollection.stream().map(o -> new Node(n.height(), n.breadth() + 1, o)).toList());
-				innerCollection.stream().map(o -> new Node(n.height(), n.breadth() + 1, o))
-						.forEach(nodesList::add);
+				var iterator = innerCollection.iterator();
+				while (iterator.hasNext() && !foundValue.get()) {
+					var element = iterator.next();
+					nodesList.add(new Node(n.height(), n.breadth() + 1, element));
+				}
 			} else { // Single class
 				nodesList.add(new Node(n.height(), n.breadth() + 1, fieldValue));
 			}

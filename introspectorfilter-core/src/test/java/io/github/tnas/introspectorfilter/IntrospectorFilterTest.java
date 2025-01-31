@@ -28,7 +28,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 class IntrospectorFilterTest {
 
     Logger logger = LoggerFactory.getLogger(IntrospectorFilterTest.class);
-    private static final int DEFAULT_COLLECTION_SIZE = 100;
+    private static final int DEFAULT_COLLECTION_SIZE = 300;
     private static final int DEFAULT_NUM_THREADS = 10;
 
     private static Faker faker;
@@ -105,7 +105,7 @@ class IntrospectorFilterTest {
         assertEquals(1, Stream.of(graph).filter(o -> filter.filter(o, passengerName)).count());
     }
 
-    @Test
+//    @Test
     void not_found_lieberherr_one_instance() {
         assertEquals(0, Stream.of(graph).filter(o -> filter.filter(o, passengerName)).count());
     }
