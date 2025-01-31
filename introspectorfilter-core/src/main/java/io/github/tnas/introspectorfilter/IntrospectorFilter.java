@@ -21,6 +21,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiPredicate;
 import java.util.function.Predicate;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 public class IntrospectorFilter {
@@ -86,41 +87,13 @@ public class IntrospectorFilter {
 		var foundValue = new AtomicBoolean(false);
 		var idleThreads = new BitSet(this.numThreads);
 
-		for (var th = 0; th < this.numThreads; ++th) {
-
-			this.executor.execute(() -> {
-
-				final int tid = (int) Thread.currentThread().threadId() % this.numThreads;
-				logger.debug("Running Thread-{}", tid);
-
-				while (hasActiveThreads.test(idleThreads, foundValue)) {
-
-					logger.debug("Thread-{} will check by pending work", tid);
-
-					while (hasPendingWork.test(nodesList, foundValue)) { // BFS for relationships
-
-						var node = nodesList.poll();
-
-						if (notToProcessNode.test(node)) {
-							idleThreads.set(tid, true);
-							logger.debug("Thread-{} idle", tid);
-							continue;
-						}
-
-						idleThreads.set(tid, false);
-
-                        assert node != null;
-                        logger.debug("Thread-{} processing {}", tid, node.value());
-
-						this.searchInHierarchy(nodesList, node, foundValue, textFilter, tid);
-
-						this.searchInNodeValue(node, textFilter, foundValue, tid);
-					}
-				}
-
-				logger.debug("Thread-{} is over", tid);
-			});
+		if (this.numThreads == 1) {
+			this.runFilter(nodesList, idleThreads, foundValue, textFilter);
+		} else {
+			IntStream.range(0, this.numThreads)
+					.forEach(th -> executor.execute(() -> this.runFilter(nodesList, idleThreads, foundValue, textFilter)));
 		}
+
 
 		this.shutdownThreadsPool();
 
@@ -128,7 +101,40 @@ public class IntrospectorFilter {
 
 		return foundValue.get();
 	}
-	
+
+	private void runFilter(ConcurrentLinkedQueue<Node> nodesList, BitSet idleThreads, AtomicBoolean foundValue, String textFilter) {
+
+		final int tid = (int) Thread.currentThread().threadId() % this.numThreads;
+		logger.debug("Running Thread-{}", tid);
+
+		while (hasActiveThreads.test(idleThreads, foundValue)) {
+
+			while (hasPendingWork.test(nodesList, foundValue)) { // BFS for relationships
+
+				var node = nodesList.poll();
+
+				if (notToProcessNode.test(node)) {
+					idleThreads.set(tid, true);
+					logger.debug("Thread-{} idle", tid);
+					continue;
+				}
+
+				idleThreads.set(tid, false);
+
+				assert node != null;
+				logger.debug("Thread-{} processing {}", tid, node.value());
+
+				this.searchInHierarchy(nodesList, node, foundValue, textFilter, tid);
+
+				this.searchInNodeValue(node, textFilter, foundValue, tid);
+
+				idleThreads.set(tid, true);
+			}
+		}
+
+		logger.debug("Thread-{} is over", tid);
+	}
+
 	private boolean isStringOrWrapper(Object fieldValue) {
 		return fieldValue instanceof String || ClassUtils.isPrimitiveWrapper(fieldValue.getClass());
 	}
@@ -183,7 +189,9 @@ public class IntrospectorFilter {
 			if (isStringOrWrapper(fieldValue)) {
 				return containsTextFilter(fieldValue.toString(), textFilter);
 			} else if (fieldValue instanceof Collection<?> innerCollection) {
-				nodesList.addAll(innerCollection.stream().map(o -> new Node(n.height(), n.breadth() + 1, o)).toList());
+//				nodesList.addAll(innerCollection.stream().map(o -> new Node(n.height(), n.breadth() + 1, o)).toList());
+				innerCollection.stream().map(o -> new Node(n.height(), n.breadth() + 1, o))
+						.forEach(nodesList::add);
 			} else { // Single class
 				nodesList.add(new Node(n.height(), n.breadth() + 1, fieldValue));
 			}

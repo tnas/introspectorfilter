@@ -13,11 +13,30 @@ then
   rm -f $MEMORY_FILE
 fi
 
-GRAPH_SIZE=300
-UNIT_TEST="IntrospectorFilterTest#lieberherr_one_instance"
+GRAPH_SIZE=400
+
+UNIT_TEST="IntrospectorFilterTest#found_lieberherr_one_instance"
 mvn -DargLine="-DGRAPH_SIZE=$GRAPH_SIZE -DNUM_THREADS=1" -Dtest="$UNIT_TEST" test
 mvn -DargLine="-DGRAPH_SIZE=$GRAPH_SIZE -DNUM_THREADS=2" -Dtest="$UNIT_TEST" test
 mvn -DargLine="-DGRAPH_SIZE=$GRAPH_SIZE -DNUM_THREADS=4" -Dtest="$UNIT_TEST" test
 mvn -DargLine="-DGRAPH_SIZE=$GRAPH_SIZE -DNUM_THREADS=6" -Dtest="$UNIT_TEST" test
 mvn -DargLine="-DGRAPH_SIZE=$GRAPH_SIZE -DNUM_THREADS=8" -Dtest="$UNIT_TEST" test
 mvn -DargLine="-DGRAPH_SIZE=$GRAPH_SIZE -DNUM_THREADS=10" -Dtest="$UNIT_TEST" test
+mvn -DargLine="-DGRAPH_SIZE=$GRAPH_SIZE -DNUM_THREADS=12" -Dtest="$UNIT_TEST" test
+mvn -DargLine="-DGRAPH_SIZE=$GRAPH_SIZE -DNUM_THREADS=14" -Dtest="$UNIT_TEST" test
+mvn -DargLine="-DGRAPH_SIZE=$GRAPH_SIZE -DNUM_THREADS=16" -Dtest="$UNIT_TEST" test
+mvn -DargLine="-DGRAPH_SIZE=$GRAPH_SIZE -DNUM_THREADS=18" -Dtest="$UNIT_TEST" test
+mvn -DargLine="-DGRAPH_SIZE=$GRAPH_SIZE -DNUM_THREADS=20" -Dtest="$UNIT_TEST" test
+
+UNIT_TEST="IntrospectorFilterTest#not_found_lieberherr_one_instance"
+mvn -DargLine="-DGRAPH_SIZE=$GRAPH_SIZE -DNUM_THREADS=1" -Dtest="$UNIT_TEST" test
+mvn -DargLine="-DGRAPH_SIZE=$GRAPH_SIZE -DNUM_THREADS=2" -Dtest="$UNIT_TEST" test
+mvn -DargLine="-DGRAPH_SIZE=$GRAPH_SIZE -DNUM_THREADS=4" -Dtest="$UNIT_TEST" test
+mvn -DargLine="-DGRAPH_SIZE=$GRAPH_SIZE -DNUM_THREADS=6" -Dtest="$UNIT_TEST" test
+mvn -DargLine="-DGRAPH_SIZE=$GRAPH_SIZE -DNUM_THREADS=8" -Dtest="$UNIT_TEST" test
+mvn -DargLine="-DGRAPH_SIZE=$GRAPH_SIZE -DNUM_THREADS=10" -Dtest="$UNIT_TEST" test
+mvn -DargLine="-DGRAPH_SIZE=$GRAPH_SIZE -DNUM_THREADS=12" -Dtest="$UNIT_TEST" test
+mvn -DargLine="-DGRAPH_SIZE=$GRAPH_SIZE -DNUM_THREADS=14" -Dtest="$UNIT_TEST" test
+mvn -DargLine="-DGRAPH_SIZE=$GRAPH_SIZE -DNUM_THREADS=16" -Dtest="$UNIT_TEST" test
+mvn -DargLine="-DGRAPH_SIZE=$GRAPH_SIZE -DNUM_THREADS=18" -Dtest="$UNIT_TEST" test
+mvn -DargLine="-DGRAPH_SIZE=$GRAPH_SIZE -DNUM_THREADS=20" -Dtest="$UNIT_TEST" test
