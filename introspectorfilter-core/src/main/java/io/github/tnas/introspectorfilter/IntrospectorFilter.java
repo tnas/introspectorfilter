@@ -2,6 +2,7 @@ package io.github.tnas.introspectorfilter;
 
 import io.github.tnas.introspectorfilter.annotation.Filterable;
 import io.github.tnas.introspectorfilter.exception.ExceptionWrapper;
+import io.github.tnas.introspectorfilter.exception.IntrospectionRuntimeException;
 import org.apache.commons.lang3.ClassUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -15,6 +16,7 @@ import java.util.Collection;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -57,8 +59,6 @@ public class IntrospectorFilter {
 		this.breadthBound = breadth;
 		this.hierarchicalAnnotations = Set.of(annotations);
 		this.wrapper = new ExceptionWrapper();
-		this.numThreads = Runtime.getRuntime().availableProcessors();
-		this.executor = Executors.newFixedThreadPool(numThreads);
 	}
 
 	@SafeVarargs
@@ -86,15 +86,24 @@ public class IntrospectorFilter {
 
 		var foundValue = new AtomicBoolean(false);
 		var idleThreads = new BitSet(this.numThreads);
+		var latch = new CountDownLatch(this.numThreads);
 
-		if (this.numThreads == 1) {
-			this.filter(nodesList, idleThreads, foundValue, textFilter);
+		if (this.numThreads > 1) {
+
+			IntStream.range(0, this.numThreads).forEach(th -> executor.execute(() -> {
+				this.filter(nodesList, idleThreads, foundValue, textFilter);
+				latch.countDown();
+			}));
+
+			try {
+				latch.await();
+			} catch (InterruptedException e) {
+				Thread.currentThread().interrupt();
+				throw new IntrospectionRuntimeException(e);
+			}
 		} else {
-			IntStream.range(0, this.numThreads)
-					.forEach(th -> executor.execute(() -> this.filter(nodesList, idleThreads, foundValue, textFilter)));
+			this.filter(nodesList, idleThreads, foundValue, textFilter);
 		}
-
-		this.shutdownThreadsPool();
 
 		logger.debug("Filtering process finished");
 
@@ -104,7 +113,7 @@ public class IntrospectorFilter {
 	private void filter(ConcurrentLinkedQueue<Node> nodesList, BitSet idleThreads, AtomicBoolean foundValue, String textFilter) {
 
 		final int tid = (int) Thread.currentThread().threadId() % this.numThreads;
-		logger.debug("Running Thread-{}", tid);
+		logger.debug("Running Thread");
 
 		while (hasActiveThreads.test(idleThreads, foundValue)) {
 
@@ -114,24 +123,24 @@ public class IntrospectorFilter {
 
 				if (notToProcessNode.test(node)) {
 					idleThreads.set(tid, true);
-					logger.debug("Thread-{} idle", tid);
+					logger.debug("Thread idle");
 					continue;
 				}
 
 				idleThreads.set(tid, false);
 
 				assert node != null;
-				logger.debug("Thread-{} processing {}", tid, node.value());
+				logger.debug("Processing {}", node.value());
 
-				this.searchInHierarchy(nodesList, node, foundValue, textFilter, tid);
+				this.searchInHierarchy(nodesList, node, foundValue, textFilter);
 
-				this.searchInNodeValue(node, textFilter, foundValue, tid);
+				this.searchInNodeValue(node, textFilter, foundValue);
 
 				idleThreads.set(tid, true);
 			}
 		}
 
-		logger.debug("Thread-{} is over", tid);
+		logger.debug("Thread is over");
 	}
 
 	private boolean isStringOrWrapper(Object fieldValue) {
@@ -142,13 +151,13 @@ public class IntrospectorFilter {
 		return Objects.nonNull(text) && StringUtils.stripAccents(text.toLowerCase()).contains(filter);
 	}
 
-	private void searchInNodeValue(Node node, String textFilter, AtomicBoolean foundValue, int tid) {
+	private void searchInNodeValue(Node node, String textFilter, AtomicBoolean foundValue) {
 
 		var nodeValue = node.value();
 
 		if (isStringOrWrapper(nodeValue) && containsTextFilter(nodeValue.toString(), textFilter)) {
 			foundValue.set(true);
-			logger.debug("Thread-{} found the searched value '{}'", tid, textFilter);
+			logger.debug("Searched value found '{}'", textFilter);
 		}
 	}
 
@@ -160,7 +169,7 @@ public class IntrospectorFilter {
 						.anyMatch(this.hierarchicalAnnotations::contains));
 	}
 
-	private void searchInHierarchy(Collection<Node> nodesList, Node node, AtomicBoolean foundValue, String textFilter, int tid) {
+	private void searchInHierarchy(Collection<Node> nodesList, Node node, AtomicBoolean foundValue, String textFilter) {
 
 		var nodeValue = node.value();
 		var nodeValueClass = nodeValue.getClass();
@@ -169,7 +178,7 @@ public class IntrospectorFilter {
 		do { // Hierarchical traversing
 			if (Objects.nonNull(this.searchInRelationships(node, nodeValueClass, heightHop, textFilter, nodesList, foundValue))) {
 				foundValue.set(true);
-				logger.debug("Thread-{} found the searched value '{}'", tid, textFilter);
+				logger.debug("Searched value found '{}'", textFilter);
 			}
 
 			nodeValueClass = nodeValueClass.getSuperclass();
@@ -192,6 +201,7 @@ public class IntrospectorFilter {
 				var iterator = innerCollection.iterator();
 				while (iterator.hasNext() && !foundValue.get()) {
 					var element = iterator.next();
+					logger.debug("Add node {} to list", element);
 					nodesList.add(new Node(n.height(), n.breadth() + 1, element));
 				}
 			} else { // Single class
@@ -212,7 +222,7 @@ public class IntrospectorFilter {
 				.orElse(null);
 	}
 
-	private void shutdownThreadsPool() {
+	public void stop() {
 
 		this.executor.shutdown();
 
@@ -226,8 +236,12 @@ public class IntrospectorFilter {
 		}
 	}
 
-	public void setNumThreads(int numThreads) {
+	public void start(int numThreads) {
+
 		this.numThreads = numThreads;
-		this.executor = Executors.newFixedThreadPool(this.numThreads);
+
+		if (this.numThreads > 1) {
+			this.executor = Executors.newFixedThreadPool(numThreads);
+		}
 	}
 }
