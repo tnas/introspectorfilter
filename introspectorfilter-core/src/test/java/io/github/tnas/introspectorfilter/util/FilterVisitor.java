@@ -5,8 +5,12 @@ import io.github.tnas.introspectorfilter.instance.demeterdj.Bus;
 import io.github.tnas.introspectorfilter.instance.demeterdj.Person;
 import io.github.tnas.introspectorfilter.instance.demeterdj.Village;
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class FilterVisitor extends Visitor {
+
+    Logger logger = LoggerFactory.getLogger(FilterVisitor.class);
 
     private final String filter;
     private final boolean abortTraversal;
@@ -30,6 +34,8 @@ public class FilterVisitor extends Visitor {
             case Village village -> StringUtils.stripAccents(village.getName().toLowerCase()).contains(filter);
             default -> false;
         };
+
+        logger.debug("Search in {} outcomes {}", obj, this.foundValue);
     }
 
     @Override

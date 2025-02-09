@@ -10,6 +10,7 @@ import io.github.tnas.introspectorfilter.util.PerformanceLogger;
 import io.github.tnas.introspectorfilter.util.TraversalAbortedByFoundValueException;
 import org.instancio.Instancio;
 import org.instancio.Select;
+import org.instancio.TypeToken;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -21,22 +22,25 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.IntStream;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class DemeterDJTest {
 
     Logger logger = LoggerFactory.getLogger(DemeterDJTest.class);
 
-    private static final int DEFAULT_COLLECTION_SIZE = 100;
+    private static final int FILTERED_SIZE = 3;
+    private static final int DEFAULT_COLLECTION_SIZE = 10;
     private static final String PKG = "io.github.tnas.introspectorfilter.instance.demeterdj";
 
     private static Faker faker;
 
     private Traversal traversal;
     private String passengerName;
-    private BusRoute graph;
+    private List<BusRoute> graph;
     private FilterVisitor visitorFilter;
     private Instant start;
 
@@ -72,24 +76,67 @@ class DemeterDJTest {
         PerformanceLogger.logElapsedRuntime(runtimeMessage);
     }
 
-    private void loadGraphModel(String testName) {
-        this.graph = Instancio.of(BusRoute.class)
-                .generate(Select.types(Class::isArray), gen -> gen.array().length(DEFAULT_COLLECTION_SIZE))
-                .create();
+    private int getCollectionsSize() {
+        return Objects.isNull(System.getProperty("GRAPH_SIZE")) ?
+                DEFAULT_COLLECTION_SIZE : Integer.parseInt(System.getProperty("GRAPH_SIZE"));
+    }
 
-        if (testName.startsWith("found")) {
-            var index = DEFAULT_COLLECTION_SIZE - 1;
-            graph.getBuses()[index].getPassengers()[index].setName(passengerName);
+    private void loadGraphModel(String testName) {
+
+        var collectionsSize = this.getCollectionsSize();
+
+        if (testName.contains("one_instance")) {
+
+            this.graph = List.of(Instancio.of(BusRoute.class)
+                    .generate(Select.types(Class::isArray), gen -> gen.array().length(collectionsSize))
+                    .create());
+
+            if (testName.startsWith("found")) {
+                logger.info("Searching by passenger name '{}'", passengerName);
+                var index = collectionsSize - 1;
+                graph.getFirst().getBuses()[index].getPassengers()[index].setName(passengerName);
+            }
+
+            logger.info("Instance with collections of size {} is ready to test with 1 threads", collectionsSize);
+        } else {
+            this.graph = Instancio.of(new TypeToken<List<BusRoute>>() { })
+                    .generate(Select.root(), gen -> gen.collection().size(collectionsSize))
+                    .generate(Select.types(Class::isArray), gen -> gen.array().length(collectionsSize))
+                    .create();
+
+            IntStream.rangeClosed(1, FILTERED_SIZE).forEach(i -> {
+                var index = collectionsSize - i;
+                graph.get(index).getBuses()[index].getPassengers()[index].setName(passengerName);
+            });
+
+            logger.info("Collection of size {} is ready to test with 1 threads", collectionsSize);
         }
     }
 
     @Test
     void found_lieberherr_one_instance() {
-        assertThrows(TraversalAbortedByFoundValueException.class, () -> traversal.traverse(graph, visitorFilter));
+        assertEquals(1, graph.stream().filter(o -> {
+            try {
+                return (boolean) traversal.traverse(o, visitorFilter);
+            } catch (TraversalAbortedByFoundValueException e) {
+                return true;
+            }
+        }).count());
     }
 
     @Test
     void not_found_lieberherr_one_instance() {
-        assertFalse((Boolean) traversal.traverse(graph, visitorFilter));
+        assertEquals(0, graph.stream().filter(o -> (boolean) traversal.traverse(o, visitorFilter)).count());
+    }
+
+    @Test
+    void found_lieberherr_multiple_instances() {
+        assertEquals(FILTERED_SIZE, graph.stream().filter(o -> {
+            try {
+                return (boolean) traversal.traverse(o, visitorFilter);
+            } catch (TraversalAbortedByFoundValueException e) {
+                return true;
+            }
+        }).count());
     }
 }
