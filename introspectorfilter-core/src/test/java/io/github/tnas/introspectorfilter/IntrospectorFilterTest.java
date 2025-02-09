@@ -1,7 +1,7 @@
 package io.github.tnas.introspectorfilter;
 
 import com.github.javafaker.Faker;
-import io.github.tnas.introspectorfilter.lieberherr.BusRoute;
+import io.github.tnas.introspectorfilter.instance.lieberherr.BusRoute;
 import io.github.tnas.introspectorfilter.util.PerformanceLogger;
 import org.instancio.Instancio;
 import org.instancio.Select;

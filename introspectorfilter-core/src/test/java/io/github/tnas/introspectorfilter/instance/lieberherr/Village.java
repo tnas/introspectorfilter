@@ -1,4 +1,4 @@
-package io.github.tnas.introspectorfilter.lieberherr;
+package io.github.tnas.introspectorfilter.instance.lieberherr;
 
 import io.github.tnas.introspectorfilter.annotation.Filterable;
 

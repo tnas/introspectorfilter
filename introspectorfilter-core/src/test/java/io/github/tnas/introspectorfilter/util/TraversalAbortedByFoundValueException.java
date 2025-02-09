@@ -1,4 +1,4 @@
 package io.github.tnas.introspectorfilter.util;
 
-public class InterruptedTraversingByFoundValueException {
+public class TraversalAbortedByFoundValueException extends RuntimeException {
 }

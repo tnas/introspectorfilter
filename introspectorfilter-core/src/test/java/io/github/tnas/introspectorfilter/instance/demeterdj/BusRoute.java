@@ -1,4 +1,4 @@
-package io.github.tnas.introspectorfilter.lieberherr.demeterdj;
+package io.github.tnas.introspectorfilter.instance.demeterdj;
 
 import io.github.tnas.introspectorfilter.annotation.Filterable;
 

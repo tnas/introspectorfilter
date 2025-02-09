@@ -1,19 +1,25 @@
-package io.github.tnas.introspectorfilter;
+package io.github.tnas.introspectorfilter.util;
 
 import edu.neu.ccs.demeter.dj.Visitor;
-import io.github.tnas.introspectorfilter.lieberherr.demeterdj.Bus;
-import io.github.tnas.introspectorfilter.lieberherr.demeterdj.Person;
-import io.github.tnas.introspectorfilter.lieberherr.demeterdj.Village;
+import io.github.tnas.introspectorfilter.instance.demeterdj.Bus;
+import io.github.tnas.introspectorfilter.instance.demeterdj.Person;
+import io.github.tnas.introspectorfilter.instance.demeterdj.Village;
 import org.apache.commons.lang3.StringUtils;
 
 public class FilterVisitor extends Visitor {
 
     private final String filter;
+    private final boolean abortTraversal;
     private boolean foundValue;
 
-    public FilterVisitor(Object filter) {
+    public FilterVisitor(Object filter, boolean abortTraversal) {
         this.filter = StringUtils.stripAccents(filter.toString().trim().toLowerCase());
         this.foundValue = false;
+        this.abortTraversal = abortTraversal;
+    }
+
+    public FilterVisitor(Object filter) {
+        this(filter, true);
     }
 
     @Override
@@ -28,14 +34,9 @@ public class FilterVisitor extends Visitor {
 
     @Override
     public void after(Object obj, Class cl) {
-        if (this.foundValue) {
-            this.finish();
+        if (this.foundValue && this.abortTraversal) {
+            throw new TraversalAbortedByFoundValueException();
         }
-    }
-
-    @Override
-    public void finish() {
-
     }
 
     @Override
