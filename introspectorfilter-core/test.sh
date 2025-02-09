@@ -13,7 +13,9 @@ then
   rm -f $MEMORY_FILE
 fi
 
-GRAPH_SIZE=400
+mvn install:install-file -Dfile=dj.jar -DgroupId=edu.neu.ccs.demeter -DartifactId=dj -Dversion=0.8.6 -Dpackaging=jar
+
+GRAPH_SIZE=300
 
 UNIT_TEST="IntrospectorFilterTest#found_lieberherr_one_instance"
 mvn -DargLine="-DGRAPH_SIZE=$GRAPH_SIZE -DNUM_THREADS=1" -Dtest="$UNIT_TEST" test
@@ -28,6 +30,19 @@ mvn -DargLine="-DGRAPH_SIZE=$GRAPH_SIZE -DNUM_THREADS=16" -Dtest="$UNIT_TEST" te
 mvn -DargLine="-DGRAPH_SIZE=$GRAPH_SIZE -DNUM_THREADS=18" -Dtest="$UNIT_TEST" test
 mvn -DargLine="-DGRAPH_SIZE=$GRAPH_SIZE -DNUM_THREADS=20" -Dtest="$UNIT_TEST" test
 
+UNIT_TEST="DemeterDJTest#found_lieberherr_one_instance"
+mvn -DargLine="-DGRAPH_SIZE=$GRAPH_SIZE -DNUM_THREADS=1" -Dtest="$UNIT_TEST" test
+mvn -DargLine="-DGRAPH_SIZE=$GRAPH_SIZE -DNUM_THREADS=1" -Dtest="$UNIT_TEST" test
+mvn -DargLine="-DGRAPH_SIZE=$GRAPH_SIZE -DNUM_THREADS=1" -Dtest="$UNIT_TEST" test
+mvn -DargLine="-DGRAPH_SIZE=$GRAPH_SIZE -DNUM_THREADS=1" -Dtest="$UNIT_TEST" test
+mvn -DargLine="-DGRAPH_SIZE=$GRAPH_SIZE -DNUM_THREADS=1" -Dtest="$UNIT_TEST" test
+mvn -DargLine="-DGRAPH_SIZE=$GRAPH_SIZE -DNUM_THREADS=1" -Dtest="$UNIT_TEST" test
+mvn -DargLine="-DGRAPH_SIZE=$GRAPH_SIZE -DNUM_THREADS=1" -Dtest="$UNIT_TEST" test
+mvn -DargLine="-DGRAPH_SIZE=$GRAPH_SIZE -DNUM_THREADS=1" -Dtest="$UNIT_TEST" test
+mvn -DargLine="-DGRAPH_SIZE=$GRAPH_SIZE -DNUM_THREADS=1" -Dtest="$UNIT_TEST" test
+mvn -DargLine="-DGRAPH_SIZE=$GRAPH_SIZE -DNUM_THREADS=1" -Dtest="$UNIT_TEST" test
+mvn -DargLine="-DGRAPH_SIZE=$GRAPH_SIZE -DNUM_THREADS=1" -Dtest="$UNIT_TEST" test
+
 UNIT_TEST="IntrospectorFilterTest#not_found_lieberherr_one_instance"
 mvn -DargLine="-DGRAPH_SIZE=$GRAPH_SIZE -DNUM_THREADS=1" -Dtest="$UNIT_TEST" test
 mvn -DargLine="-DGRAPH_SIZE=$GRAPH_SIZE -DNUM_THREADS=2" -Dtest="$UNIT_TEST" test
@@ -40,3 +55,16 @@ mvn -DargLine="-DGRAPH_SIZE=$GRAPH_SIZE -DNUM_THREADS=14" -Dtest="$UNIT_TEST" te
 mvn -DargLine="-DGRAPH_SIZE=$GRAPH_SIZE -DNUM_THREADS=16" -Dtest="$UNIT_TEST" test
 mvn -DargLine="-DGRAPH_SIZE=$GRAPH_SIZE -DNUM_THREADS=18" -Dtest="$UNIT_TEST" test
 mvn -DargLine="-DGRAPH_SIZE=$GRAPH_SIZE -DNUM_THREADS=20" -Dtest="$UNIT_TEST" test
+
+UNIT_TEST="DemeterDJTest#not_found_lieberherr_one_instance"
+mvn -DargLine="-DGRAPH_SIZE=$GRAPH_SIZE -DNUM_THREADS=1" -Dtest="$UNIT_TEST" test
+mvn -DargLine="-DGRAPH_SIZE=$GRAPH_SIZE -DNUM_THREADS=1" -Dtest="$UNIT_TEST" test
+mvn -DargLine="-DGRAPH_SIZE=$GRAPH_SIZE -DNUM_THREADS=1" -Dtest="$UNIT_TEST" test
+mvn -DargLine="-DGRAPH_SIZE=$GRAPH_SIZE -DNUM_THREADS=1" -Dtest="$UNIT_TEST" test
+mvn -DargLine="-DGRAPH_SIZE=$GRAPH_SIZE -DNUM_THREADS=1" -Dtest="$UNIT_TEST" test
+mvn -DargLine="-DGRAPH_SIZE=$GRAPH_SIZE -DNUM_THREADS=1" -Dtest="$UNIT_TEST" test
+mvn -DargLine="-DGRAPH_SIZE=$GRAPH_SIZE -DNUM_THREADS=1" -Dtest="$UNIT_TEST" test
+mvn -DargLine="-DGRAPH_SIZE=$GRAPH_SIZE -DNUM_THREADS=1" -Dtest="$UNIT_TEST" test
+mvn -DargLine="-DGRAPH_SIZE=$GRAPH_SIZE -DNUM_THREADS=1" -Dtest="$UNIT_TEST" test
+mvn -DargLine="-DGRAPH_SIZE=$GRAPH_SIZE -DNUM_THREADS=1" -Dtest="$UNIT_TEST" test
+mvn -DargLine="-DGRAPH_SIZE=$GRAPH_SIZE -DNUM_THREADS=1" -Dtest="$UNIT_TEST" test

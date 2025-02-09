@@ -58,18 +58,19 @@ class DemeterDJTest {
                 new ClassGraph(PKG));
         this.visitorFilter = new FilterVisitor(passengerName);
         this.loadGraphModel(testInfo.getDisplayName());
-        PerformanceLogger.logMemoryUsage(String.format("[%s - Before]", testInfo.getDisplayName()));
+        PerformanceLogger.logMemoryUsage(String.format("[%s#%s - Before]", this.getClass().getSimpleName(), testInfo.getDisplayName()));
         this.start = Instant.now();
     }
 
     @AfterEach
     void setUpAfterEach(TestInfo testInfo) throws IOException {
         var end = Instant.now();
-        PerformanceLogger.logMemoryUsage(String.format("[%s - After]", testInfo.getDisplayName()));
-        var runtimeMessage = String.format("[%s] Graph size: %d, Collections size: %d, Threads: %d, Elapsed time: %d ms%n",
+        PerformanceLogger.logMemoryUsage(String.format("[%s#%s - After]", this.getClass().getSimpleName(), testInfo.getDisplayName()));
+        var runtimeMessage = String.format("[%s#%s] Graph size: %d, Collections size: %d, Threads: %d, Elapsed time: %d ms%n",
+                this.getClass().getSimpleName(),
                 testInfo.getDisplayName(),
                 1,
-                DEFAULT_COLLECTION_SIZE,
+                this.getCollectionsSize(),
                 1,
                 Duration.between(this.start, end).toMillis());
         logger.info(runtimeMessage);

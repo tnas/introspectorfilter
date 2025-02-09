@@ -26,6 +26,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 class IntrospectorFilterTest {
 
     Logger logger = LoggerFactory.getLogger(IntrospectorFilterTest.class);
+
     private static final int FILTERED_SIZE = 3;
     private static final int DEFAULT_COLLECTION_SIZE = 10;
     private static final int DEFAULT_NUM_THREADS = 4;
@@ -49,15 +50,16 @@ class IntrospectorFilterTest {
         this.filter = new IntrospectorFilter();
         this.filter.start(this.getNumThreads());
         this.loadGraphModel(testInfo.getDisplayName());
-        PerformanceLogger.logMemoryUsage(String.format("[%s - Before]", testInfo.getDisplayName()));
+        PerformanceLogger.logMemoryUsage(String.format("[%s#%s - Before]", this.getClass().getSimpleName(), testInfo.getDisplayName()));
         this.start = Instant.now();
     }
 
     @AfterEach
     void setUpAfterEach(TestInfo testInfo) throws IOException {
         var end = Instant.now();
-        PerformanceLogger.logMemoryUsage(String.format("[%s - After]", testInfo.getDisplayName()));
-        var runtimeMessage = String.format("[%s] Graph size: %d, Collections size: %d, Threads: %d, Elapsed time: %d ms%n",
+        PerformanceLogger.logMemoryUsage(String.format("[%s#%s - After]", this.getClass().getSimpleName(), testInfo.getDisplayName()));
+        var runtimeMessage = String.format("[%s#%s] Graph size: %d, Collections size: %d, Threads: %d, Elapsed time: %d ms%n",
+                this.getClass().getSimpleName(),
                 testInfo.getDisplayName(),
                 this.graph.size(),
                 this.getCollectionsSize(),

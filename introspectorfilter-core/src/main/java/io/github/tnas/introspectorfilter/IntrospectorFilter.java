@@ -90,7 +90,7 @@ public class IntrospectorFilter {
 
 		if (this.numThreads > 1) {
 
-			IntStream.range(0, this.numThreads).forEach(th -> executor.execute(() -> {
+			IntStream.range(0, this.numThreads).forEach(th -> this.executor.execute(() -> {
 				this.filter(nodesList, idleThreads, foundValue, textFilter);
 				latch.countDown();
 			}));
@@ -223,6 +223,10 @@ public class IntrospectorFilter {
 	}
 
 	public void stop() {
+
+		if (Objects.isNull(this.executor)) {
+			return;
+		}
 
 		this.executor.shutdown();
 

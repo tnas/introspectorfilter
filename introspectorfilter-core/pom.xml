@@ -49,6 +49,11 @@
             <artifactId>slf4j-simple</artifactId>
             <version>${sl4f.version}</version>
         </dependency>
+        <dependency>
+            <groupId>edu.neu.ccs.demeter</groupId>
+            <artifactId>dj</artifactId>
+            <version>0.8.6</version>
+        </dependency>
     </dependencies>
 
     <build>
