@@ -80,6 +80,7 @@ public class IntrospectorFilter {
 		logger.debug("Executor pool set with {} threads", numThreads);
 
 		String textFilter = StringUtils.stripAccents(filter.toString().trim().toLowerCase());
+
 		var nodesList = new ConcurrentLinkedQueue<Node>();
 
 		nodesList.add(new Node(0, 0, value));
