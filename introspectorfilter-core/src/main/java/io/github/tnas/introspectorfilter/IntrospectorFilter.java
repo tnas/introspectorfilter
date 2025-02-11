@@ -85,7 +85,6 @@ public class IntrospectorFilter {
 		String textFilter = StringUtils.stripAccents(filter.toString().trim().toLowerCase());
 
 		var foundValue = new AtomicBoolean(false);
-//		var idleThreads = new BitSet(this.numThreads);
 		var idleThreads = new int[this.numThreads];
 		var latch = new CountDownLatch(this.numThreads);
 		var tidCounter = new AtomicInteger(0);

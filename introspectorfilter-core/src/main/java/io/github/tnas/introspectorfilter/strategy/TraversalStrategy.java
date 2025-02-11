@@ -12,20 +12,22 @@ import java.beans.PropertyDescriptor;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.util.Arrays;
-import java.util.BitSet;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Objects;
-import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiPredicate;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
-public abstract class TraversalStrategy {
+public abstract class TraversalStrategy<R> {
 
     Logger logger = LoggerFactory.getLogger(TraversalStrategy.class);
+
+    protected static final int IDLE_THREAD = 1;
+    protected static final int ACTIVE_THREAD = 0;
 
     protected int numThreads;
     protected int heightBound;
@@ -46,7 +48,7 @@ public abstract class TraversalStrategy {
     protected final BiPredicate<Collection<Node>, AtomicBoolean> hasPendingWork = (nodesList, foundValue) ->
             !nodesList.isEmpty() && !foundValue.get();
 
-    public abstract void traverse(Queue<Node> nodesList, BitSet idleThreads, AtomicBoolean foundValue, String textFilter);
+    public abstract void traverse(R start, AtomicInteger tidCounter, int[] idleThreads, AtomicBoolean foundValue, String textFilter);
 
     protected boolean isStringOrWrapper(Object fieldValue) {
         return fieldValue instanceof String || ClassUtils.isPrimitiveWrapper(fieldValue.getClass());
@@ -56,13 +58,10 @@ public abstract class TraversalStrategy {
         return Objects.nonNull(text) && StringUtils.stripAccents(text.toLowerCase()).contains(filter);
     }
 
-    protected void searchInNodeValue(Node node, String textFilter, AtomicBoolean foundValue) {
-
-        var nodeValue = node.value();
-
+    protected void searchInNodeValue(Object nodeValue, String textFilter, AtomicBoolean foundValue, int tid) {
         if (isStringOrWrapper(nodeValue) && containsTextFilter(nodeValue.toString(), textFilter)) {
             foundValue.set(true);
-            logger.debug("Searched value found '{}'", textFilter);
+            logger.debug("Thread {} found value '{}'", tid, textFilter);
         }
     }
 

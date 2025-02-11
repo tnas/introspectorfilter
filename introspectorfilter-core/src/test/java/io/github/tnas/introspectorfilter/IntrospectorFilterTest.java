@@ -30,7 +30,7 @@ class IntrospectorFilterTest {
 
     private static final int FILTERED_SIZE = 3;
     private static final int DEFAULT_COLLECTION_SIZE = 10;
-    private static final int DEFAULT_NUM_THREADS = 10;
+    private static final int DEFAULT_NUM_THREADS = 4;
 
     private static Faker faker;
     private IntrospectorFilter filter;
