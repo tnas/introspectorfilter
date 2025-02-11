@@ -22,6 +22,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiPredicate;
 import java.util.function.Predicate;
 import java.util.stream.IntStream;
@@ -84,13 +85,15 @@ public class IntrospectorFilter {
 		String textFilter = StringUtils.stripAccents(filter.toString().trim().toLowerCase());
 
 		var foundValue = new AtomicBoolean(false);
-		var idleThreads = new BitSet(this.numThreads);
+//		var idleThreads = new BitSet(this.numThreads);
+		var idleThreads = new int[this.numThreads];
 		var latch = new CountDownLatch(this.numThreads);
+		var tidCounter = new AtomicInteger(0);
 
 		if (this.numThreads > 1) {
 
 			IntStream.range(0, this.numThreads).forEach(th -> this.executor.execute(() -> {
-				this.traversalStrategy.traverse(value, idleThreads, foundValue, textFilter);
+				this.traversalStrategy.traverse(value, tidCounter, idleThreads, foundValue, textFilter);
 				latch.countDown();
 			}));
 
@@ -101,7 +104,7 @@ public class IntrospectorFilter {
 				throw new IntrospectionRuntimeException(e);
 			}
 		} else {
-			this.traversalStrategy.traverse(value, idleThreads, foundValue, textFilter);
+			this.traversalStrategy.traverse(value, tidCounter, idleThreads, foundValue, textFilter);
 		}
 
 		logger.debug("Filtering process finished");

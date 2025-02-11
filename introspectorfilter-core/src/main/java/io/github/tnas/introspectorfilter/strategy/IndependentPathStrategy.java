@@ -12,6 +12,7 @@ import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Queue;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiPredicate;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
@@ -28,10 +29,11 @@ public class IndependentPathStrategy extends TraversalStrategy {
 
     }
 
-    public void traverse(Object root, BitSet idleThreads, AtomicBoolean foundValue, String textFilter) {
+    public void traverse(Object root, AtomicInteger tidCounter, int[] idleThreads, AtomicBoolean foundValue, String textFilter) {
 
-        final int tid = (int) Thread.currentThread().threadId() % this.numThreads;
-        logger.debug("Running Thread");
+        final int tid = tidCounter.getAndIncrement();
+        logger.debug("Running Thread {}", tid);
+        var waitingLogged = false;
 
         var nodesList = new LinkedList<>();
         nodesList.add(root);
@@ -45,21 +47,21 @@ public class IndependentPathStrategy extends TraversalStrategy {
                 try {
                     node = nodesList.removeFirst();
                 } catch (NoSuchElementException e) {
-                    idleThreads.set(tid, true);
-                    logger.debug("Thread idle");
+                    idleThreads[tid] = 1;
+                    logger.debug("Thread {} idle", tid);
                     continue;
                 }
 
-                idleThreads.set(tid, false);
+                idleThreads[tid] = 0;
 
-                logger.debug("Processing {}", node);
+                logger.debug("Thread {} processing {}", tid, node);
 
                 var nodeValueClass = node.getClass();
 
                 do { // Hierarchical traversing
                     if (Objects.nonNull(this.searchInRelationships(node, nodeValueClass, textFilter, nodesList, foundValue, tid))) {
                         foundValue.set(true);
-                        logger.debug("Searched value found '{}'", textFilter);
+                        logger.debug("Thread {} found value '{}'", tid, textFilter);
                     }
 
                     nodeValueClass = nodeValueClass.getSuperclass();
@@ -67,12 +69,17 @@ public class IndependentPathStrategy extends TraversalStrategy {
 
                 if (isStringOrWrapper(node) && containsTextFilter(node.toString(), textFilter)) {
                     foundValue.set(true);
-                    logger.debug("Searched value found '{}'", textFilter);
+                    logger.debug("Thread {} found value '{}'", tid, textFilter);
                 }
 
-                idleThreads.set(tid, true);
+                idleThreads[tid] = 1;
+                logger.debug("Thread {} set idle", tid);
             }
 
+            if (!waitingLogged) {
+                logger.debug("Thread {} waiting others to finish: {}", tid, idleThreads);
+                waitingLogged = true;
+            }
         }
     }
 
@@ -93,7 +100,7 @@ public class IndependentPathStrategy extends TraversalStrategy {
 
                 for (var index = workInterval.from; index < workInterval.to && !foundValue.get() && iterator.hasNext(); ++index) {
                     var element = iterator.next();
-                    logger.debug("Add node {} to list", element);
+                    logger.debug("Thread {} add node {} to list", tid, element);
                     nodesList.add(element);
                 }
             } else { // Single class
@@ -116,16 +123,11 @@ public class IndependentPathStrategy extends TraversalStrategy {
     private WorkInterval getWorkInterval(final int workerId, final int numWorkers, final int workSize) {
 
         var interval = new WorkInterval();
-
         var step = workSize / numWorkers;
-
         interval.from = workerId * step;
-        interval.to = interval.from + step;
+        interval.to = workerId == numWorkers - 1 ? workSize : interval.from + step;
 
-        if (interval.to + step >= workSize) {
-            interval.to = workSize;
-        }
-
+        logger.debug("Thread {} get work interval from {} to {}", workerId, interval.from, interval.to);
         return interval;
     }
 

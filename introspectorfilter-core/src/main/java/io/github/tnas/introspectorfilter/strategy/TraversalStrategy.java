@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 import java.beans.PropertyDescriptor;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
+import java.util.Arrays;
 import java.util.BitSet;
 import java.util.Collection;
 import java.util.Collections;
@@ -39,8 +40,8 @@ public abstract class TraversalStrategy {
     protected final Predicate<Node> notToProcessNode = n ->
             Objects.isNull(n) || n.height() > this.heightBound || n.breadth() > this.breadthBound;
 
-    protected final BiPredicate<BitSet, AtomicBoolean> hasActiveThreads = (idleThreads, foundValue) ->
-            idleThreads.stream().count() < this.numThreads && !foundValue.get();
+    protected final BiPredicate<int[], AtomicBoolean> hasActiveThreads = (idleThreads, foundValue) ->
+            Arrays.stream(idleThreads).sum() < this.numThreads && !foundValue.get();
 
     protected final BiPredicate<Collection<Node>, AtomicBoolean> hasPendingWork = (nodesList, foundValue) ->
             !nodesList.isEmpty() && !foundValue.get();
@@ -132,4 +133,5 @@ public abstract class TraversalStrategy {
         this.relationshipsAnnotation = Filterable.class;
         this.hierarchicalAnnotations = Collections.emptySet();
     }
+
 }
