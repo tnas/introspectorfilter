@@ -3,6 +3,7 @@ package io.github.tnas.introspectorfilter;
 import io.github.tnas.introspectorfilter.annotation.Filterable;
 import io.github.tnas.introspectorfilter.exception.ExceptionWrapper;
 import io.github.tnas.introspectorfilter.exception.IntrospectionRuntimeException;
+import io.github.tnas.introspectorfilter.strategy.IndependentPathStrategy;
 import org.apache.commons.lang3.ClassUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -38,6 +39,7 @@ public class IntrospectorFilter {
 	private Class<? extends Annotation> relationshipsAnnotation;
 	private int heightBound;
 	private int breadthBound;
+	private IndependentPathStrategy traversalStrategy;
 
 	private final Predicate<Field> isFilterableField = f ->
 			Stream.of(f.getAnnotations()).anyMatch(a -> a.annotationType().equals(relationshipsAnnotation));
@@ -72,6 +74,42 @@ public class IntrospectorFilter {
 	}
 
 	public Boolean filter(Object value, Object filter) {
+
+		if (Objects.isNull(filter) || StringUtils.isAllBlank(filter.toString())) {
+			return true;
+		}
+
+		logger.debug("Executor pool set with {} threads", numThreads);
+
+		String textFilter = StringUtils.stripAccents(filter.toString().trim().toLowerCase());
+
+		var foundValue = new AtomicBoolean(false);
+		var idleThreads = new BitSet(this.numThreads);
+		var latch = new CountDownLatch(this.numThreads);
+
+		if (this.numThreads > 1) {
+
+			IntStream.range(0, this.numThreads).forEach(th -> this.executor.execute(() -> {
+				this.traversalStrategy.traverse(value, idleThreads, foundValue, textFilter);
+				latch.countDown();
+			}));
+
+			try {
+				latch.await();
+			} catch (InterruptedException e) {
+				Thread.currentThread().interrupt();
+				throw new IntrospectionRuntimeException(e);
+			}
+		} else {
+			this.traversalStrategy.traverse(value, idleThreads, foundValue, textFilter);
+		}
+
+		logger.debug("Filtering process finished");
+
+		return foundValue.get();
+	}
+
+	public Boolean filterOld(Object value, Object filter) {
 		
 		if (Objects.isNull(filter) || StringUtils.isAllBlank(filter.toString())) {
 			return true;
@@ -248,5 +286,13 @@ public class IntrospectorFilter {
 		if (this.numThreads > 1) {
 			this.executor = Executors.newFixedThreadPool(numThreads);
 		}
+	}
+
+	public void setTraversalStrategy(IndependentPathStrategy traversalStrategy) {
+		this.traversalStrategy = traversalStrategy;
+	}
+
+	public void loadStrategy() {
+		this.traversalStrategy.load(this.numThreads);
 	}
 }

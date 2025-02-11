@@ -54,7 +54,7 @@ public class IndependentPathStrategy extends TraversalStrategy {
 
                 logger.debug("Processing {}", node);
 
-                var nodeValueClass = root.getClass();
+                var nodeValueClass = node.getClass();
 
                 do { // Hierarchical traversing
                     if (Objects.nonNull(this.searchInRelationships(node, nodeValueClass, textFilter, nodesList, foundValue, tid))) {
@@ -117,14 +117,13 @@ public class IndependentPathStrategy extends TraversalStrategy {
 
         var interval = new WorkInterval();
 
-        var lastWorkIndex = workSize - 1;
         var step = workSize / numWorkers;
 
         interval.from = workerId * step;
         interval.to = interval.from + step;
 
-        if (interval.to + step > lastWorkIndex) {
-            interval.to = lastWorkIndex;
+        if (interval.to + step >= workSize) {
+            interval.to = workSize;
         }
 
         return interval;

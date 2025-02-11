@@ -1,6 +1,7 @@
 package io.github.tnas.introspectorfilter.strategy;
 
 import io.github.tnas.introspectorfilter.Node;
+import io.github.tnas.introspectorfilter.annotation.Filterable;
 import io.github.tnas.introspectorfilter.exception.ExceptionWrapper;
 import org.apache.commons.lang3.ClassUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -12,6 +13,7 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.util.BitSet;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Objects;
 import java.util.Queue;
 import java.util.Set;
@@ -122,5 +124,12 @@ public abstract class TraversalStrategy {
                 .filter(matchTextFilter)
                 .findFirst()
                 .orElse(null);
+    }
+
+    public void load(int numThreads) {
+        this.numThreads = numThreads;
+        this.wrapper = new ExceptionWrapper();
+        this.relationshipsAnnotation = Filterable.class;
+        this.hierarchicalAnnotations = Collections.emptySet();
     }
 }
