@@ -1,12 +1,11 @@
 package io.github.tnas.introspectorfilter.bean;
 
-import java.util.Locale;
+import io.github.tnas.introspectorfilter.IntrospectorFilter;
 
 import javax.annotation.PostConstruct;
 import javax.faces.bean.ManagedBean;
 import javax.faces.bean.ViewScoped;
-
-import io.github.tnas.introspectorfilter.IntrospectorFilter;
+import java.util.Locale;
 
 @ManagedBean
 @ViewScoped
@@ -16,7 +15,7 @@ public class PrimeFacesGlobalFilterBean {
 
 	@PostConstruct
 	public void init() {
-		this.introspectorFilter = new IntrospectorFilter();
+		this.introspectorFilter = IntrospectorFilter.builder().build();
 	}
 
 	public Boolean filter(Object value, Object filter, Locale locale) {

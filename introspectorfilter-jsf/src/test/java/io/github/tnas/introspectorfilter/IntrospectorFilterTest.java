@@ -21,7 +21,7 @@ class IntrospectorFilterTest {
 
     @BeforeAll
     public static void setUp() {
-        filter = new IntrospectorFilter();
+        filter = IntrospectorFilter.builder().build();
         postsCollection = PostFactory.generateList(10, 3, 2, new Random(2024));
     }
 

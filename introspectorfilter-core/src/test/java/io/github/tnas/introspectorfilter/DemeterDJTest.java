@@ -115,7 +115,7 @@ class DemeterDJTest {
     }
 
     @Test
-    void found_lieberherr_one_instance() {
+    void found_one_instance() {
         assertEquals(1, graph.stream().filter(o -> {
             try {
                 return (boolean) traversal.traverse(o, visitorFilter);
@@ -126,12 +126,12 @@ class DemeterDJTest {
     }
 
     @Test
-    void not_found_lieberherr_one_instance() {
+    void not_found_one_instance() {
         assertEquals(0, graph.stream().filter(o -> (boolean) traversal.traverse(o, visitorFilter)).count());
     }
 
     @Test
-    void found_lieberherr_multiple_instances() {
+    void found_multiple_instances() {
         assertEquals(FILTERED_SIZE, graph.stream().filter(o -> {
             try {
                 return (boolean) traversal.traverse(o, visitorFilter);

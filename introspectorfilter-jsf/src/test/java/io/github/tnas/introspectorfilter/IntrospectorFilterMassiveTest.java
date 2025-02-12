@@ -1,16 +1,15 @@
 package io.github.tnas.introspectorfilter;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
+import io.github.tnas.introspectorfilter.model.Post;
+import io.github.tnas.introspectorfilter.util.PostFactory;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.Random;
 
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
-
-import io.github.tnas.introspectorfilter.model.Post;
-import io.github.tnas.introspectorfilter.util.PostFactory;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 class IntrospectorFilterMassiveTest {
 
@@ -19,7 +18,7 @@ class IntrospectorFilterMassiveTest {
 
     @BeforeAll
     public static void setUp() {
-        filter = new IntrospectorFilter();
+        filter = IntrospectorFilter.builder().build();
         postsCollection = PostFactory.generateList(1000, 3000, 2000, new Random(4098));
     }
 

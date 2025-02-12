@@ -2,6 +2,7 @@ package io.github.tnas.introspectorfilter;
 
 import com.github.javafaker.Faker;
 import io.github.tnas.introspectorfilter.instance.lieberherr.BusRoute;
+import io.github.tnas.introspectorfilter.strategy.IndependentPathStrategy;
 import io.github.tnas.introspectorfilter.util.PerformanceLogger;
 import org.instancio.Instancio;
 import org.instancio.Select;
@@ -47,7 +48,15 @@ class IntrospectorFilterTest {
 
     @BeforeEach
     void setUpBeforeEach(TestInfo testInfo) throws IOException {
-        this.filter = IntrospectorFilter.builder().build();
+
+        if (testInfo.getDisplayName().contains("full_shared_node")) {
+            this.filter = IntrospectorFilter.builder().build();
+        } else if (testInfo.getDisplayName().contains("independent_path")) {
+            this.filter = IntrospectorFilter.builder().withTraversalStrategy(new IndependentPathStrategy()).build();
+        } else {
+            throw new IllegalArgumentException("Traversal strategy not found in the unit test name");
+        }
+
         this.filter.start(this.getNumThreads());
         this.loadGraphModel(testInfo.getDisplayName());
         PerformanceLogger.logMemoryUsage(String.format("[%s#%s - Before]", this.getClass().getSimpleName(), testInfo.getDisplayName()));
@@ -117,17 +126,32 @@ class IntrospectorFilterTest {
     }
 
     @Test
-    void found_lieberherr_one_instance() {
+    void found_one_instance_full_shared_node() {
         assertEquals(1, graph.stream().filter(o -> filter.filter(o, passengerName)).count());
     }
 
     @Test
-    void not_found_lieberherr_one_instance() {
+    void not_found_one_instance_full_shared_node() {
         assertEquals(0, graph.stream().filter(o -> filter.filter(o, passengerName)).count());
     }
 
     @Test
-    void found_lieberherr_multiple_instances() {
+    void found_multiple_instances_full_shared_node() {
+        assertEquals(FILTERED_SIZE, graph.stream().filter(o -> filter.filter(o, passengerName)).count());
+    }
+
+    @Test
+    void found_one_instance_independent_path() {
+        assertEquals(1, graph.stream().filter(o -> filter.filter(o, passengerName)).count());
+    }
+
+    @Test
+    void not_found_one_instance_independent_path() {
+        assertEquals(0, graph.stream().filter(o -> filter.filter(o, passengerName)).count());
+    }
+
+    @Test
+    void found_multiple_instances_independent_path() {
         assertEquals(FILTERED_SIZE, graph.stream().filter(o -> filter.filter(o, passengerName)).count());
     }
 }
