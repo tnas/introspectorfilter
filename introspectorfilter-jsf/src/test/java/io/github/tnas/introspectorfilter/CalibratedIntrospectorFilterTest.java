@@ -1,16 +1,15 @@
 package io.github.tnas.introspectorfilter;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import io.github.tnas.introspectorfilter.model.Post;
+import io.github.tnas.introspectorfilter.util.PostFactory;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.Random;
 
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
-
-import io.github.tnas.introspectorfilter.model.Post;
-import io.github.tnas.introspectorfilter.util.PostFactory;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CalibratedIntrospectorFilterTest {
 
@@ -23,14 +22,14 @@ class CalibratedIntrospectorFilterTest {
 
     @Test
     void shouldNotFilterTextInPublicationsWithHeight0() {
-        var filter = new IntrospectorFilter(0, 10);
+        var filter = IntrospectorFilter.builder().withHeightBound(0).withBreadthBound(10).build();
         var filteredList = postsCollection.stream().filter(p -> filter.filter(p, "vitae")).toList();
         assertTrue(filteredList.isEmpty());
     }
 
     @Test
     void shouldFilterTextInPublicationsWithHeight1() {
-        var filter = new IntrospectorFilter(1, 10);
+        var filter = IntrospectorFilter.builder().withHeightBound(1).withBreadthBound(10).build();
         var filteredList = postsCollection.stream().filter(p -> filter.filter(p, "vitae")).toList();
         assertEquals(2, filteredList.size());
         assertEquals(1, filteredList.getFirst().getId());
@@ -39,14 +38,14 @@ class CalibratedIntrospectorFilterTest {
 
     @Test
     void shouldNotFilterByHashtagsWithWidth0() {
-        var filter = new IntrospectorFilter(10, 0);
+        var filter = IntrospectorFilter.builder().withHeightBound(10).withBreadthBound(0).build();
         var filteredList = postsCollection.stream().filter(p -> filter.filter(p, "Hecuba")).toList();
         assertTrue(filteredList.isEmpty());
     }
 
     @Test
     void shouldFilterByHashtagsWithWidth1() {
-        var filter = new IntrospectorFilter(0, 1);
+        var filter = IntrospectorFilter.builder().withHeightBound(0).withBreadthBound(1).build();
         var filteredList = postsCollection.stream().filter(p -> filter.filter(p, "Hecuba")).toList();
         assertEquals(1, filteredList.size());
         assertEquals(7, filteredList.getFirst().getId());
@@ -55,14 +54,14 @@ class CalibratedIntrospectorFilterTest {
     
     @Test
     void shouldNotFilterByAddressWithBreadth1() {
-        var filter = new IntrospectorFilter(2, 1);
+        var filter = IntrospectorFilter.builder().withHeightBound(2).withBreadthBound(1).build();
         var filteredList = postsCollection.stream().filter(p -> filter.filter(p, "Moldova")).toList();
         assertTrue(filteredList.isEmpty());
     }
     
     @Test
     void shouldFilterByAddressWithBreadth2() {
-        var filter = new IntrospectorFilter(0, 2);
+        var filter = IntrospectorFilter.builder().withHeightBound(0).withBreadthBound(2).build();
         var filteredList = postsCollection.stream().filter(p -> filter.filter(p, "Moldova")).toList();
         assertEquals(1, filteredList.size());
         assertEquals(6, filteredList.getFirst().getId());

@@ -1,8 +1,5 @@
 package io.github.tnas.introspectorfilter.strategy;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.beans.PropertyDescriptor;
 import java.util.Collection;
 import java.util.LinkedList;
@@ -10,30 +7,24 @@ import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.BiPredicate;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
-public class IndependentPathStrategy extends TraversalStrategy<Object> {
-
-    Logger log = LoggerFactory.getLogger(IndependentPathStrategy.class);
-
-    private final BiPredicate<Collection<Object>, AtomicBoolean> hasPendingWork = (nodesList, foundValue) ->
-            !nodesList.isEmpty() && !foundValue.get();
+public class IndependentPathStrategy extends TraversalStrategy {
 
     @Override
     public void traverse(Object root, AtomicInteger tidCounter, int[] idleThreads, AtomicBoolean foundValue, String textFilter) {
 
         final int tid = tidCounter.getAndIncrement();
-        log.debug("Running Thread {}", tid);
+        logger.debug("Running Thread {}", tid);
         var waitingLogged = false;
 
         var nodesList = new LinkedList<>();
         nodesList.add(root);
 
-        while (hasActiveThreads.test(idleThreads, foundValue)) {
+        while (hasActiveThreads(idleThreads, foundValue)) {
 
-            while (hasPendingWork.test(nodesList, foundValue)) {
+            while (hasPendingWork(nodesList, foundValue)) {
 
                 Object node;
 
@@ -41,24 +32,24 @@ public class IndependentPathStrategy extends TraversalStrategy<Object> {
                     node = nodesList.removeFirst();
                 } catch (NoSuchElementException e) {
                     idleThreads[tid] = IDLE_THREAD;
-                    log.debug("Thread {} idle", tid);
+                    logger.debug("Thread {} idle", tid);
                     continue;
                 }
 
                 idleThreads[tid] = ACTIVE_THREAD;
 
-                log.debug("Thread {} processing {}", tid, node);
+                logger.debug("Thread {} processing {}", tid, node);
 
                 this.searchInHierarchy(nodesList, node, foundValue, textFilter, tid);
 
                 this.searchInNodeValue(node, textFilter, foundValue, tid);
 
                 idleThreads[tid] = IDLE_THREAD;
-                log.debug("Thread {} set idle", tid);
+                logger.debug("Thread {} set idle", tid);
             }
 
             if (!waitingLogged) {
-                log.debug("Thread {} waiting others to finish: {}", tid, idleThreads);
+                logger.debug("Thread {} waiting others to finish: {}", tid, idleThreads);
                 waitingLogged = true;
             }
         }
@@ -71,7 +62,7 @@ public class IndependentPathStrategy extends TraversalStrategy<Object> {
         do { // Hierarchical traversing
             if (Objects.nonNull(this.searchInRelationships(node, nodeValueClass, textFilter, nodesList, foundValue, tid))) {
                 foundValue.set(true);
-                log.debug("Searched value found '{}'", textFilter);
+                logger.debug("Searched value found '{}'", textFilter);
             }
 
             nodeValueClass = nodeValueClass.getSuperclass();
@@ -96,7 +87,7 @@ public class IndependentPathStrategy extends TraversalStrategy<Object> {
 
                 for (var index = workInterval.from; index < workInterval.to && !foundValue.get() && iterator.hasNext(); ++index) {
                     var element = iterator.next();
-                    log.debug("Thread {} add node {} to list", tid, element);
+                    logger.debug("Thread {} add node {} to list", tid, element);
                     nodesList.add(element);
                 }
             } else { // Single class
@@ -123,7 +114,7 @@ public class IndependentPathStrategy extends TraversalStrategy<Object> {
         interval.from = workerId * step;
         interval.to = workerId == numWorkers - 1 ? workSize : interval.from + step;
 
-        log.debug("Thread {} get work interval from {} to {}", workerId, interval.from, interval.to);
+        logger.debug("Thread {} get work interval from {} to {}", workerId, interval.from, interval.to);
         return interval;
     }
 

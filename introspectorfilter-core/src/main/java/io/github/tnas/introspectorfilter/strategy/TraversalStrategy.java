@@ -1,6 +1,5 @@
 package io.github.tnas.introspectorfilter.strategy;
 
-import io.github.tnas.introspectorfilter.Node;
 import io.github.tnas.introspectorfilter.annotation.Filterable;
 import io.github.tnas.introspectorfilter.exception.ExceptionWrapper;
 import org.apache.commons.lang3.ClassUtils;
@@ -8,7 +7,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.beans.PropertyDescriptor;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.util.Arrays;
@@ -18,20 +16,19 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.BiPredicate;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
-public abstract class TraversalStrategy<R> {
+public abstract class TraversalStrategy {
 
-    Logger logger = LoggerFactory.getLogger(TraversalStrategy.class);
+    protected Logger logger = LoggerFactory.getLogger(TraversalStrategy.class);
 
     protected static final int IDLE_THREAD = 1;
     protected static final int ACTIVE_THREAD = 0;
 
-    protected int numThreads;
     protected int heightBound;
     protected int breadthBound;
+    protected int numThreads;
     protected ExceptionWrapper wrapper;
     protected Set<Class<? extends Annotation>> hierarchicalAnnotations;
     protected Class<? extends Annotation> relationshipsAnnotation;
@@ -39,16 +36,23 @@ public abstract class TraversalStrategy<R> {
     protected final Predicate<Field> isFilterableField = f ->
             Stream.of(f.getAnnotations()).anyMatch(a -> a.annotationType().equals(relationshipsAnnotation));
 
-    protected final Predicate<Node> notToProcessNode = n ->
-            Objects.isNull(n) || n.height() > this.heightBound || n.breadth() > this.breadthBound;
+    protected TraversalStrategy() {
+        this.heightBound = Integer.MAX_VALUE;
+        this.breadthBound = Integer.MAX_VALUE;
+        this.relationshipsAnnotation = Filterable.class;
+        this.hierarchicalAnnotations = Collections.emptySet();
+        this.wrapper = new ExceptionWrapper();
+    }
 
-    protected final BiPredicate<int[], AtomicBoolean> hasActiveThreads = (idleThreads, foundValue) ->
-            Arrays.stream(idleThreads).sum() < this.numThreads && !foundValue.get();
+    public abstract void traverse(Object root, AtomicInteger tidCounter, int[] idleThreads, AtomicBoolean foundValue, String textFilter);
 
-    protected final BiPredicate<Collection<Node>, AtomicBoolean> hasPendingWork = (nodesList, foundValue) ->
-            !nodesList.isEmpty() && !foundValue.get();
+    protected boolean hasActiveThreads(int[] idleThreads, AtomicBoolean foundValue) {
+        return Arrays.stream(idleThreads).sum() < this.numThreads && !foundValue.get();
+    }
 
-    public abstract void traverse(R start, AtomicInteger tidCounter, int[] idleThreads, AtomicBoolean foundValue, String textFilter);
+    protected final boolean hasPendingWork(Collection<?> nodesList, AtomicBoolean foundValue) {
+        return !nodesList.isEmpty() && !foundValue.get();
+    }
 
     protected boolean isStringOrWrapper(Object fieldValue) {
         return fieldValue instanceof String || ClassUtils.isPrimitiveWrapper(fieldValue.getClass());
@@ -73,57 +77,24 @@ public abstract class TraversalStrategy<R> {
                         .anyMatch(this.hierarchicalAnnotations::contains));
     }
 
-    protected void searchInHierarchy(Collection<Node> nodesList, Node node, AtomicBoolean foundValue, String textFilter) {
-
-        var nodeValue = node.value();
-        var nodeValueClass = nodeValue.getClass();
-        int heightHop = node.height();
-
-        do { // Hierarchical traversing
-            if (Objects.nonNull(this.searchInRelationships(node, nodeValueClass, heightHop, textFilter, nodesList, foundValue))) {
-                foundValue.set(true);
-                logger.debug("Searched value found '{}'", textFilter);
-            }
-
-            nodeValueClass = nodeValueClass.getSuperclass();
-            heightHop++;
-        } while (isValidParentClass(nodeValueClass) && heightHop <= this.heightBound && !foundValue.get());
+    public void setHeightBound(int heightBound) {
+        this.heightBound = heightBound;
     }
 
-    protected Node searchInRelationships(Node node, Class<?> instanceClass, final int height, String textFilter,
-                                       Collection<Node> nodesList, AtomicBoolean foundValue) {
+    public void setBreadthBound(int breadthBound) {
+        this.breadthBound = breadthBound;
+    }
 
-        var instance = node.value();
+    public void setNumThreads(int numThreads) {
+        this.numThreads = numThreads;
+    }
 
-        Predicate<Node> matchTextFilter = n -> {
+    public void setHierarchicalAnnotations(Set<Class<? extends Annotation>> hierarchicalAnnotations) {
+        this.hierarchicalAnnotations = hierarchicalAnnotations;
+    }
 
-            var fieldValue = n.value();
-
-            if (isStringOrWrapper(fieldValue)) {
-                return containsTextFilter(fieldValue.toString(), textFilter);
-            } else if (fieldValue instanceof Collection<?> innerCollection) {
-                var iterator = innerCollection.iterator();
-                while (iterator.hasNext() && !foundValue.get()) {
-                    var element = iterator.next();
-                    logger.debug("Add node {} to list", element);
-                    nodesList.add(new Node(n.height(), n.breadth() + 1, element));
-                }
-            } else { // Single class
-                nodesList.add(new Node(n.height(), n.breadth() + 1, fieldValue));
-            }
-
-            return false;
-        };
-
-        return Stream.of(instanceClass.getDeclaredFields())
-                .filter(isFilterableField)
-                .map(this.wrapper.wrap(f -> new PropertyDescriptor(f.getName(), instance.getClass()).getReadMethod()
-                        .invoke(instance)))
-                .filter(Objects::nonNull)
-                .map(o -> new Node(height, node.breadth(), o))
-                .filter(matchTextFilter)
-                .findFirst()
-                .orElse(null);
+    public void setRelationshipsAnnotation(Class<? extends Annotation> relationshipsAnnotation) {
+        this.relationshipsAnnotation = relationshipsAnnotation;
     }
 
     public void load(int numThreads) {

@@ -2,7 +2,6 @@ package io.github.tnas.introspectorfilter;
 
 import com.github.javafaker.Faker;
 import io.github.tnas.introspectorfilter.instance.lieberherr.BusRoute;
-import io.github.tnas.introspectorfilter.strategy.IndependentPathStrategy;
 import io.github.tnas.introspectorfilter.util.PerformanceLogger;
 import org.instancio.Instancio;
 import org.instancio.Select;
@@ -48,11 +47,8 @@ class IntrospectorFilterTest {
 
     @BeforeEach
     void setUpBeforeEach(TestInfo testInfo) throws IOException {
-        this.filter = new IntrospectorFilter();
+        this.filter = IntrospectorFilter.builder().build();
         this.filter.start(this.getNumThreads());
-        this.filter.setTraversalStrategy(new IndependentPathStrategy());
-        this.filter.loadStrategy();
-
         this.loadGraphModel(testInfo.getDisplayName());
         PerformanceLogger.logMemoryUsage(String.format("[%s#%s - Before]", this.getClass().getSimpleName(), testInfo.getDisplayName()));
         this.start = Instant.now();
