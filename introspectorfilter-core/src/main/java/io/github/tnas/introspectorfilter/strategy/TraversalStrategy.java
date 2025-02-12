@@ -97,11 +97,4 @@ public abstract class TraversalStrategy {
         this.relationshipsAnnotation = relationshipsAnnotation;
     }
 
-    public void load(int numThreads) {
-        this.numThreads = numThreads;
-        this.wrapper = new ExceptionWrapper();
-        this.relationshipsAnnotation = Filterable.class;
-        this.hierarchicalAnnotations = Collections.emptySet();
-    }
-
 }
