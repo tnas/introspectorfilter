@@ -15,7 +15,7 @@ fi
 
 mvn install:install-file -Dfile=dj.jar -DgroupId=edu.neu.ccs.demeter -DartifactId=dj -Dversion=0.8.6 -Dpackaging=jar
 
-GRAPH_SIZE=200
+GRAPH_SIZE=300
 
 UNIT_TEST="DemeterDJTest#found_one_instance"
 mvn -DargLine="-DGRAPH_SIZE=$GRAPH_SIZE -DNUM_THREADS=1" -Dtest="$UNIT_TEST" test

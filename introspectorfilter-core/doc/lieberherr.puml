@@ -1,0 +1,18 @@
+@startuml
+
+skinparam monochrome true
+
+class BusRoute
+class Bus
+class Village
+class BusStop
+class Person
+
+BusRoute *-- "*" Bus
+Bus *-- "*" Person
+
+BusRoute *-- "*" Village
+Village *- "*" BusStop
+BusStop *- "*" Person
+
+@enduml

@@ -26,9 +26,13 @@ public abstract class TraversalStrategy {
     protected static final int IDLE_THREAD = 1;
     protected static final int ACTIVE_THREAD = 0;
 
+    protected int numThreads;
+    protected int[] idleThreads;
+    protected AtomicInteger tidCounter;
+    protected AtomicBoolean foundValue ;
+
     protected int heightBound;
     protected int breadthBound;
-    protected int numThreads;
     protected ExceptionWrapper wrapper;
     protected Set<Class<? extends Annotation>> hierarchicalAnnotations;
     protected Class<? extends Annotation> relationshipsAnnotation;
@@ -37,6 +41,10 @@ public abstract class TraversalStrategy {
             Stream.of(f.getAnnotations()).anyMatch(a -> a.annotationType().equals(relationshipsAnnotation));
 
     protected TraversalStrategy() {
+        this.numThreads = 1;
+        this.idleThreads = new int[this.numThreads];
+        this.tidCounter = new AtomicInteger(0);
+        this.foundValue = new AtomicBoolean(false);
         this.heightBound = Integer.MAX_VALUE;
         this.breadthBound = Integer.MAX_VALUE;
         this.relationshipsAnnotation = Filterable.class;
@@ -44,7 +52,7 @@ public abstract class TraversalStrategy {
         this.wrapper = new ExceptionWrapper();
     }
 
-    public abstract void traverse(Object root, AtomicInteger tidCounter, int[] idleThreads, AtomicBoolean foundValue, String textFilter);
+    public abstract void traverse(Object root, String textFilter);
 
     protected boolean hasActiveThreads(int[] idleThreads, AtomicBoolean foundValue) {
         return Arrays.stream(idleThreads).sum() < this.numThreads && !foundValue.get();
@@ -87,6 +95,7 @@ public abstract class TraversalStrategy {
 
     public void setNumThreads(int numThreads) {
         this.numThreads = numThreads;
+        this.idleThreads = new int[this.numThreads];
     }
 
     public void setHierarchicalAnnotations(Set<Class<? extends Annotation>> hierarchicalAnnotations) {
@@ -97,4 +106,13 @@ public abstract class TraversalStrategy {
         this.relationshipsAnnotation = relationshipsAnnotation;
     }
 
+    public void reset() {
+        this.foundValue = new AtomicBoolean(false);
+        this.idleThreads = new int[this.numThreads];
+        this.tidCounter = new AtomicInteger(0);
+    }
+
+    public boolean isFoundValue() {
+        return this.foundValue.get();
+    }
 }

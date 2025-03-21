@@ -14,8 +14,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
 
 public class IntrospectorFilter {
@@ -41,15 +39,14 @@ public class IntrospectorFilter {
 
 		String textFilter = StringUtils.stripAccents(filter.toString().trim().toLowerCase());
 
-		var foundValue = new AtomicBoolean(false);
-		var idleThreads = new int[this.numThreads];
 		var latch = new CountDownLatch(this.numThreads);
-		var tidCounter = new AtomicInteger(0);
+
+		this.traversalStrategy.reset();
 
 		if (this.numThreads > 1) {
 
 			IntStream.range(0, this.numThreads).forEach(th -> this.executor.execute(() -> {
-				this.traversalStrategy.traverse(value, tidCounter, idleThreads, foundValue, textFilter);
+				this.traversalStrategy.traverse(value, textFilter);
 				latch.countDown();
 			}));
 
@@ -60,12 +57,12 @@ public class IntrospectorFilter {
 				throw new IntrospectionRuntimeException(e);
 			}
 		} else {
-			this.traversalStrategy.traverse(value, tidCounter, idleThreads, foundValue, textFilter);
+			this.traversalStrategy.traverse(value, textFilter);
 		}
 
 		logger.debug("Filtering process finished");
 
-		return foundValue.get();
+		return this.traversalStrategy.isFoundValue();
 	}
 
 	public void stop() {

@@ -7,8 +7,6 @@ import java.util.Collection;
 import java.util.Objects;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
@@ -21,7 +19,7 @@ public class FullSharedNodeStrategy extends TraversalStrategy {
     private Queue<Node> nodesList;
 
     @Override
-    public void traverse(Object root, AtomicInteger tidCounter, int[] idleThreads, AtomicBoolean foundValue, String textFilter) {
+    public void traverse(Object root, String textFilter) {
 
         synchronized (this) {
             if (!started) {
@@ -51,7 +49,7 @@ public class FullSharedNodeStrategy extends TraversalStrategy {
                 assert node != null;
                 logger.debug("Processing {}", node.value());
 
-                this.searchInHierarchy(nodesList, node, foundValue, textFilter);
+                this.hierarchySearch(node, textFilter);
 
                 this.searchInNodeValue(node.value(), textFilter, foundValue, tid);
 
@@ -62,14 +60,14 @@ public class FullSharedNodeStrategy extends TraversalStrategy {
         this.started = false;
     }
 
-    private void searchInHierarchy(Collection<Node> nodesList, Node node, AtomicBoolean foundValue, String textFilter) {
+    private void hierarchySearch(Node node, String textFilter) {
 
         var nodeValue = node.value();
         var nodeValueClass = nodeValue.getClass();
         int heightHop = node.height();
 
         do { // Hierarchical traversing
-            if (Objects.nonNull(this.searchInRelationships(node, nodeValueClass, heightHop, textFilter, nodesList, foundValue))) {
+            if (Objects.nonNull(this.relationshipSearch(node, nodeValueClass, heightHop, textFilter))) {
                 foundValue.set(true);
                 logger.debug("Searched value found '{}'", textFilter);
             }
@@ -79,8 +77,7 @@ public class FullSharedNodeStrategy extends TraversalStrategy {
         } while (isValidParentClass(nodeValueClass) && heightHop <= this.heightBound && !foundValue.get());
     }
 
-    private Node searchInRelationships(Node node, Class<?> instanceClass, final int height, String textFilter,
-                                         Collection<Node> nodesList, AtomicBoolean foundValue) {
+    private Node relationshipSearch(Node node, Class<?> instanceClass, final int height, String textFilter) {
 
         var instance = node.value();
 

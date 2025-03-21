@@ -5,15 +5,13 @@ import java.util.Collection;
 import java.util.LinkedList;
 import java.util.NoSuchElementException;
 import java.util.Objects;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 public class IndependentPathStrategy extends TraversalStrategy {
 
     @Override
-    public void traverse(Object root, AtomicInteger tidCounter, int[] idleThreads, AtomicBoolean foundValue, String textFilter) {
+    public void traverse(Object root, String textFilter) {
 
         final int tid = tidCounter.getAndIncrement();
         logger.debug("Running Thread {}", tid);
@@ -40,7 +38,7 @@ public class IndependentPathStrategy extends TraversalStrategy {
 
                 logger.debug("Thread {} processing {}", tid, node);
 
-                this.searchInHierarchy(nodesList, node, foundValue, textFilter, tid);
+                this.hierarchySearch(nodesList, node, textFilter, tid);
 
                 this.searchInNodeValue(node, textFilter, foundValue, tid);
 
@@ -55,12 +53,12 @@ public class IndependentPathStrategy extends TraversalStrategy {
         }
     }
 
-    private void searchInHierarchy(Collection<Object> nodesList, Object node, AtomicBoolean foundValue, String textFilter, int tid) {
+    private void hierarchySearch(Collection<Object> nodesList, Object node, String textFilter, int tid) {
 
         var nodeValueClass = node.getClass();
 
         do { // Hierarchical traversing
-            if (Objects.nonNull(this.searchInRelationships(node, nodeValueClass, textFilter, nodesList, foundValue, tid))) {
+            if (Objects.nonNull(this.relationshipSearch(node, nodeValueClass, textFilter, nodesList, tid))) {
                 foundValue.set(true);
                 logger.debug("Searched value found '{}'", textFilter);
             }
@@ -70,8 +68,7 @@ public class IndependentPathStrategy extends TraversalStrategy {
     }
 
 
-    private Object searchInRelationships(Object node, Class<?> instanceClass, String textFilter,
-                                         Collection<Object> nodesList, AtomicBoolean foundValue, int tid) {
+    private Object relationshipSearch(Object node, Class<?> instanceClass, String textFilter, Collection<Object> nodesList, int tid) {
 
         Predicate<Object> matchTextFilter = fieldValue -> {
 
